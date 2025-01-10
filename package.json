@@ -1,0 +1,7 @@
+{
+  "name": "feishu-test",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "飞书API测试",
+  "main": "test_feishu.js"
+} 

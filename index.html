@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据导入</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .upload-container {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            align-items: flex-start;
+            justify-content: center;
+            padding: 20px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .upload-section {
+            flex: 0 0 400px;
+            position: relative;
+        }
+        h1 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #333;
+            text-align: center;
+            font-weight: 500;
+        }
+        .upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 10px;
+            padding: 24px;
+            text-align: center;
+            background-color: #f8f9fa;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #1890ff;
+            background-color: #f0f7ff;
+        }
+        .upload-area.dragover {
+            border-color: #1890ff;
+            background-color: #f0f7ff;
+            transform: scale(1.02);
+        }
+        .upload-text {
+            color: #666;
+            margin-bottom: 16px;
+            font-size: 15px;
+        }
+        .select-button {
+            background-color: #1890ff;
+            color: white;
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+        }
+        .select-button:hover {
+            background-color: #40a9ff;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(24, 144, 255, 0.3);
+        }
+        .file-info {
+            margin-top: 12px;
+            color: #666;
+            font-size: 13px;
+            word-break: break-all;
+            max-width: 100%;
+            padding: 0 20px;
+        }
+        .analyze-button {
+            background-color: #52c41a;
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(82, 196, 26, 0.2);
+            margin-top: 28px;
+            align-self: center;
+        }
+        .analyze-button:hover {
+            background-color: #73d13d;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(82, 196, 26, 0.3);
+        }
+        .result-container {
+            margin-top: 40px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+        }
+        .result-header {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+        }
+        .result-content {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            margin-top: 20px;
+        }
+        .result-section {
+            flex: 1;
+            min-width: 0;
+        }
+        .result-section h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 16px;
+        }
+        .table-container {
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #eee;
+            overflow: hidden;
+        }
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        th {
+            background-color: #f7f7f7;
+            font-weight: 500;
+            color: #333;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            position: sticky;
+            top: 0;
+        }
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            color: #666;
+        }
+        tr:last-child td {
+            border-bottom: none;
+        }
+        tr:hover td {
+            background-color: #fafafa;
+        }
+        .tabs-container {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .tab {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .tab:hover {
+            background-color: #e0e0e0;
+        }
+        .tab.active {
+            background-color: #1890ff;
+            color: white;
+            box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+        }
+        .comparison-container {
+            margin: 30px 0;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+        }
+        .comparison-title {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .metric-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+        }
+        .metric-name {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .metric-values {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            gap: 12px;
+        }
+        .metric-value {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .metric-value.up {
+            color: #52c41a;
+        }
+        .metric-value.down {
+            color: #ff4d4f;
+        }
+        .metric-value.neutral {
+            color: #333;
+        }
+        .metric-arrow {
+            font-size: 14px;
+            margin-left: 4px;
+        }
+        .comparison-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .comparison-tab {
+            padding: 8px 24px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f0f0f0;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        .comparison-tab:hover {
+            background-color: #e0e0e0;
+        }
+        .comparison-tab.active {
+            background-color: #1890ff;
+            color: white;
+            box-shadow: 0 2px 6px rgba(24, 144, 255, 0.2);
+        }
+        #contentMetrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        #commerceMetrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-container">
+        <div class="upload-section">
+            <h1>上场数据导入</h1>
+            <div class="upload-area" id="yesterdayUpload">
+                <div class="upload-text">拖拽文件到此处或</div>
+                <button class="select-button">选择文件</button>
+                <input type="file" accept=".xlsx" id="yesterdayFile" style="display: none;">
+                <div class="file-info" id="yesterdayInfo"></div>
+            </div>
+        </div>
+
+        <div class="upload-section">
+            <h1>本场数据导入</h1>
+            <div class="upload-area" id="todayUpload">
+                <div class="upload-text">拖拽文件到此处或</div>
+                <button class="select-button">选择文件</button>
+                <input type="file" accept=".xlsx" id="todayFile" style="display: none;">
+                <div class="file-info" id="todayInfo"></div>
+            </div>
+        </div>
+
+        <button id="analyzeButton" class="analyze-button">开始分析</button>
+    </div>
+
+    <div class="comparison-container" id="comparisonContainer" style="display: none;">
+        <div class="comparison-title">关键数据对比</div>
+        <div class="comparison-tabs">
+            <button class="comparison-tab active" onclick="switchComparisonTab('content')">内容力</button>
+            <button class="comparison-tab" onclick="switchComparisonTab('commerce')">电商力</button>
+        </div>
+        <div id="contentMetrics" class="comparison-grid">
+            <div class="metric-card">
+                <div class="metric-name">曝光观看率</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="viewRateYesterday">-</div>
+                    <div class="metric-value" id="viewRateToday">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">人均观看时长</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="avgWatchTimeYesterday">-</div>
+                    <div class="metric-value" id="avgWatchTimeToday">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">互动率</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="interactionRateYesterday">-</div>
+                    <div class="metric-value" id="interactionRateToday">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">加粉率</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="followerRateYesterday">-</div>
+                    <div class="metric-value" id="followerRateToday">-</div>
+                </div>
+            </div>
+        </div>
+        <div id="commerceMetrics" class="comparison-grid" style="display: none;">
+            <div class="metric-card">
+                <div class="metric-name">成交金额</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="salesAmountYesterday">-</div>
+                    <div class="metric-value" id="salesAmountToday">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">千次成交</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="perThousandYesterday">-</div>
+                    <div class="metric-value" id="perThousandToday">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">商品曝光点击率</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="exposureClickRateYesterday">-</div>
+                    <div class="metric-value" id="exposureClickRateToday">-</div>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-name">商品点击成交率</div>
+                <div class="metric-values">
+                    <div class="metric-value" id="clickConversionRateYesterday">-</div>
+                    <div class="metric-value" id="clickConversionRateToday">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultContainer" class="result-container" style="display: none;">
+        <div class="comparison-title">详细数据对比</div>
+        <div class="result-header">
+            <div class="tabs-container" id="sheetTabs"></div>
+        </div>
+        <div class="result-content">
+            <div class="result-section">
+                <h3>上场数据内容</h3>
+                <div id="yesterdayContent" class="table-container"></div>
+            </div>
+            <div class="result-section">
+                <h3>本场数据内容</h3>
+                <div id="todayContent" class="table-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const analyzeButton = document.getElementById('analyzeButton');
+        const resultContainer = document.getElementById('resultContainer');
+        const yesterdayContent = document.getElementById('yesterdayContent');
+        const todayContent = document.getElementById('todayContent');
+        let yesterdayFileSelected = false;
+        let todayFileSelected = false;
+
+        function setupFileUpload(uploadArea, fileInput, infoElement) {
+            const button = uploadArea.querySelector('.select-button');
+            
+            button.addEventListener('click', () => {
+                fileInput.click();
+            });
+
+            uploadArea.addEventListener('click', (e) => {
+                if (e.target === uploadArea) {
+                    fileInput.click();
+                }
+            });
+
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    handleFile(files[0], infoElement, fileInput.id === 'yesterdayFile');
+                    fileInput.files = files;
+                }
+            });
+
+            fileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    handleFile(file, infoElement, fileInput.id === 'yesterdayFile');
+                }
+            });
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            try {
+                // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
+                if (dateStr.includes('~')) {
+                    return dateStr.split('_')[0];
+                }
+                
+                // 处理 Excel 日期格式（例如：45291.5729166667）
+                if (!isNaN(dateStr)) {
+                    const excelDate = new Date((dateStr - 25569) * 86400 * 1000);
+                    return excelDate.toISOString().split('T')[0];
+                }
+                
+                // 处理其他日期格式
+                const date = new Date(dateStr);
+                if (!isNaN(date.getTime())) {
+                    return date.toISOString().split('T')[0];
+                }
+                
+                return dateStr;
+            } catch (error) {
+                console.error('Error formatting date:', error);
+                return dateStr;
+            }
+        }
+
+        function handleFile(file, infoElement, isYesterday) {
+            if (file.name.endsWith('.xlsx')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+                        
+                        // 读取基本信息标签页
+                        const basicInfoSheet = workbook.Sheets['基本信息'];
+                        if (basicInfoSheet) {
+                            const basicInfo = XLSX.utils.sheet_to_json(basicInfoSheet);
+                            const liveTime = basicInfo[0]?.['直播时间'];
+                            if (liveTime) {
+                                const formattedDate = formatDate(liveTime);
+                                infoElement.textContent = `已选择：${formattedDate}`;
+                                infoElement.style.color = '#666';
+                                if (isYesterday) {
+                                    yesterdayFileSelected = true;
+                                } else {
+                                    todayFileSelected = true;
+                                }
+                                return;
+                            }
+                        }
+                        
+                        infoElement.textContent = '无法读取直播时间';
+                        infoElement.style.color = '#ff4444';
+                    } catch (error) {
+                        console.error('Error reading file:', error);
+                        infoElement.textContent = '文件读取错误';
+                        infoElement.style.color = '#ff4444';
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                infoElement.textContent = '请选择 .xlsx 格式的文件';
+                infoElement.style.color = '#ff4444';
+                if (isYesterday) {
+                    yesterdayFileSelected = false;
+                } else {
+                    todayFileSelected = false;
+                }
+            }
+        }
+
+        function createSheetTabs(sheetNames, containerId, onTabClick) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            const filteredSheetNames = sheetNames.filter(name => name !== '商品');
+            
+            // 创建标签按钮
+            filteredSheetNames.forEach((name, index) => {
+                const button = document.createElement('button');
+                button.className = 'tab' + (index === 0 ? ' active' : '');
+                button.textContent = name;
+                button.addEventListener('click', (e) => {
+                    // 移除所有标签的活动状态
+                    container.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    // 添加当前标签的活动状态
+                    button.classList.add('active');
+                    onTabClick(name);
+                });
+                container.appendChild(button);
+            });
+        }
+
+        function createTable(data) {
+            if (!data || data.length === 0) return document.createElement('div');
+            const table = document.createElement('table');
+            const thead = document.createElement('thead');
+            const tbody = document.createElement('tbody');
+            
+            // 需要过滤的字段列表
+            const excludeFields = [
+                '直播间封面',
+                '直播间名称',
+                '开播平台',
+                '退款金额',
+                '违规次数'
+            ];
+            
+            // 需要除以100的字段列表
+            const divideBy100Fields = [
+                '直播间观看-互动率(次数)',
+                '直播间观看-成交率(次数)'
+            ];
+            
+            // 获取过滤后的字段
+            const filteredKeys = Object.keys(data[0]).filter(key => !excludeFields.includes(key));
+            
+            // 创建表头
+            const headerRow = document.createElement('tr');
+            filteredKeys.forEach(key => {
+                const th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            });
+            thead.appendChild(headerRow);
+            
+            // 创建表格内容
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                filteredKeys.forEach(key => {
+                    const td = document.createElement('td');
+                    let value = row[key];
+                    
+                    // 如果是需要除以100的字段
+                    if (divideBy100Fields.includes(key)) {
+                        const numValue = parseFloat(value) || 0;
+                        value = (numValue / 100).toFixed(2) + '%';
+                    }
+                    // 如果字段名包含"率"但不在需要除以100的字段列表中
+                    else if (key.includes('率') && !divideBy100Fields.includes(key)) {
+                        const numValue = parseFloat(value) || 0;
+                        value = (numValue * 100).toFixed(2) + '%';
+                    }
+                    // 处理其他数值类型
+                    else if (!isNaN(value) && value !== '') {
+                        const numValue = parseFloat(value);
+                        // 检查是否有小数部分
+                        if (numValue % 1 !== 0) {
+                            value = numValue.toFixed(2);
+                        }
+                    }
+                    
+                    td.textContent = value;
+                    tr.appendChild(td);
+                });
+                tbody.appendChild(tr);
+            });
+            
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            return table;
+        }
+
+        let currentWorkbooks = {
+            yesterday: null,
+            today: null
+        };
+
+        function convertTimeToSeconds(timeStr) {
+            if (!timeStr) return 0;
+            
+            // 如果已经是数字，直接返回
+            if (!isNaN(timeStr)) {
+                return parseFloat(timeStr);
+            }
+            
+            let totalSeconds = 0;
+            
+            // 处理分钟部分
+            const minutesMatch = timeStr.match(/(\d+)分/);
+            if (minutesMatch) {
+                totalSeconds += parseInt(minutesMatch[1]) * 60;
+            }
+            
+            // 处理秒数部分
+            const secondsMatch = timeStr.match(/(\d+)秒/);
+            if (secondsMatch) {
+                totalSeconds += parseInt(secondsMatch[1]);
+            }
+            
+            return totalSeconds;
+        }
+
+        function updateComparisonData(workbooks) {
+            const metrics = {
+                'viewRate': {
+                    sheet: '流量&转化-转化漏斗',
+                    field: '直播间曝光-观看率(人数)',
+                    unit: '%',
+                    multiply100: true
+                },
+                'avgWatchTime': {
+                    sheet: '互动&人群&售后',
+                    field: '人均观看时长',
+                    unit: '秒',
+                    processValue: (value) => convertTimeToSeconds(value)
+                },
+                'interactionRate': {
+                    sheet: '流量&转化-转化漏斗',
+                    field: '直播间曝光-互动率(人数)',
+                    unit: '%',
+                    multiply100: true
+                },
+                'followerRate': {
+                    sheet: '互动&人群&售后',
+                    field: '直播间观看-关注率(人数)',
+                    unit: '%',
+                    multiply100: true
+                },
+                'salesAmount': {
+                    sheet: '基本信息',
+                    field: '直播间成交金额',
+                    unit: '元'
+                },
+                'perThousand': {
+                    sheet: '基本信息',
+                    field: '千次观看成交金额',
+                    unit: '元'
+                },
+                'exposureClickRate': {
+                    sheet: '流量&转化-转化漏斗',
+                    field: '直播间商品曝光-点击率(人数)',
+                    unit: '%',
+                    multiply100: true
+                },
+                'clickConversionRate': {
+                    sheet: '流量&转化-转化漏斗',
+                    field: '直播间商品点击-成交转化率(人数)',
+                    unit: '%',
+                    multiply100: true
+                }
+            };
+
+            for (const [key, config] of Object.entries(metrics)) {
+                try {
+                    // 获取昨天的数据
+                    const yesterdaySheet = workbooks.yesterday.Sheets[config.sheet];
+                    const yesterdayData = XLSX.utils.sheet_to_json(yesterdaySheet);
+                    let yesterdayValue = 0;
+
+                    // 获取今天的数据
+                    const todaySheet = workbooks.today.Sheets[config.sheet];
+                    const todayData = XLSX.utils.sheet_to_json(todaySheet);
+                    let todayValue = 0;
+
+                    // 获取数据值
+                    yesterdayValue = yesterdayData[0]?.[config.field] || 0;
+                    todayValue = todayData[0]?.[config.field] || 0;
+
+                    // 处理特殊值转换
+                    if (config.processValue) {
+                        yesterdayValue = config.processValue(yesterdayValue);
+                        todayValue = config.processValue(todayValue);
+                    } else {
+                        // 转换为数字
+                        yesterdayValue = parseFloat(yesterdayValue) || 0;
+                        todayValue = parseFloat(todayValue) || 0;
+
+                        // 如果需要乘100（百分比处理）
+                        if (config.multiply100) {
+                            yesterdayValue *= 100;
+                            todayValue *= 100;
+                        }
+                    }
+
+                    // 更新显示
+                    const yesterdayElement = document.getElementById(`${key}Yesterday`);
+                    const todayElement = document.getElementById(`${key}Today`);
+                    
+                    yesterdayElement.textContent = `${yesterdayValue.toFixed(2)}${config.unit}`;
+                    todayElement.textContent = `${todayValue.toFixed(2)}${config.unit}`;
+                    
+                    // 添加颜色标识
+                    todayElement.className = 'metric-value'; // 重置类名
+                    const diff = todayValue - yesterdayValue;
+                    if (diff > 0) {
+                        todayElement.classList.add('up');
+                        todayElement.innerHTML += '<span class="metric-arrow">↑</span>';
+                    } else if (diff < 0) {
+                        todayElement.classList.add('down');
+                        todayElement.innerHTML += '<span class="metric-arrow">↓</span>';
+                    } else {
+                        todayElement.classList.add('neutral');
+                    }
+                } catch (error) {
+                    console.error(`Error updating ${key}:`, error);
+                }
+            }
+        }
+
+        function showSheetContent(sheetName) {
+            if (currentWorkbooks.yesterday && currentWorkbooks.today) {
+                // 显示上场数据
+                const yesterdaySheet = currentWorkbooks.yesterday.Sheets[sheetName];
+                const yesterdayData = XLSX.utils.sheet_to_json(yesterdaySheet);
+                yesterdayContent.innerHTML = '';
+                yesterdayContent.appendChild(createTable(yesterdayData));
+
+                // 显示本场数据
+                const todaySheet = currentWorkbooks.today.Sheets[sheetName];
+                const todayData = XLSX.utils.sheet_to_json(todaySheet);
+                todayContent.innerHTML = '';
+                todayContent.appendChild(createTable(todayData));
+            }
+        }
+
+        analyzeButton.addEventListener('click', async () => {
+            const yesterdayFile = document.getElementById('yesterdayFile').files[0];
+            const todayFile = document.getElementById('todayFile').files[0];
+            
+            if (!yesterdayFile || !todayFile) {
+                alert('请先选择两个文件');
+                return;
+            }
+            
+            try {
+                // 读取上场数据
+                const yesterdayReader = new FileReader();
+                yesterdayReader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    currentWorkbooks.yesterday = XLSX.read(data, { type: 'array' });
+                    
+                    if (currentWorkbooks.today) {
+                        // 两个文件都已加载，创建标签页
+                        const sheetNames = currentWorkbooks.yesterday.SheetNames;
+                        const firstValidSheet = sheetNames.find(name => name !== '商品') || sheetNames[0];
+                        createSheetTabs(sheetNames, 'sheetTabs', showSheetContent);
+                        showSheetContent(firstValidSheet); // 显示第一个有效标签页
+                        resultContainer.style.display = 'block';
+                        document.getElementById('comparisonContainer').style.display = 'block';
+                        updateComparisonData(currentWorkbooks);
+                    }
+                };
+                yesterdayReader.readAsArrayBuffer(yesterdayFile);
+
+                // 读取本场数据
+                const todayReader = new FileReader();
+                todayReader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    currentWorkbooks.today = XLSX.read(data, { type: 'array' });
+                    
+                    if (currentWorkbooks.yesterday) {
+                        // 两个文件都已加载，创建标签页
+                        const sheetNames = currentWorkbooks.yesterday.SheetNames;
+                        const firstValidSheet = sheetNames.find(name => name !== '商品') || sheetNames[0];
+                        createSheetTabs(sheetNames, 'sheetTabs', showSheetContent);
+                        showSheetContent(firstValidSheet); // 显示第一个有效标签页
+                        resultContainer.style.display = 'block';
+                        document.getElementById('comparisonContainer').style.display = 'block';
+                        updateComparisonData(currentWorkbooks);
+                    }
+                };
+                todayReader.readAsArrayBuffer(todayFile);
+            } catch (error) {
+                console.error('Error reading files:', error);
+            }
+        });
+
+        setupFileUpload(
+            document.getElementById('yesterdayUpload'),
+            document.getElementById('yesterdayFile'),
+            document.getElementById('yesterdayInfo')
+        );
+
+        setupFileUpload(
+            document.getElementById('todayUpload'),
+            document.getElementById('todayFile'),
+            document.getElementById('todayInfo')
+        );
+
+        function switchComparisonTab(tab) {
+            const contentMetrics = document.getElementById('contentMetrics');
+            const commerceMetrics = document.getElementById('commerceMetrics');
+            const tabs = document.querySelectorAll('.comparison-tab');
+            
+            if (tab === 'content') {
+                contentMetrics.style.display = 'grid';
+                commerceMetrics.style.display = 'none';
+                tabs[0].classList.add('active');
+                tabs[1].classList.remove('active');
+            } else {
+                contentMetrics.style.display = 'none';
+                commerceMetrics.style.display = 'grid';
+                tabs[0].classList.remove('active');
+                tabs[1].classList.add('active');
+            }
+        }
+    </script>
+</body>
+</html> 
