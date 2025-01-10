@@ -365,8 +365,8 @@
             </div>
         </div>
 
-        <button id="analyzeButton" class="analyze-button">开始分析</button>
-    </div>
+            <button id="analyzeButton" class="analyze-button">开始分析</button>
+            </div>
 
     <div class="basic-info-container" id="basicInfoContainer" style="display: none;">
         <div class="comparison-title">本场基础数据</div>
@@ -520,16 +520,38 @@
             });
         }
 
-        function formatDate(dateStr) {
-            if (!dateStr) return '-';
+        function formatDate(timeStr) {
+            if (!timeStr) return '-';
             try {
-                // 从日期字符串中提取年月日
-                const [date] = dateStr.split('_');
+                // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
+                if (timeStr.includes('~')) {
+                    timeStr = timeStr.split('~')[0];
+                }
+                const [date] = timeStr.split('_');
                 const [year, month, day] = date.split('-');
                 return `${year}年${month}月${day}日`;
             } catch (error) {
                 console.error('Error formatting date:', error);
-                return dateStr;
+                return timeStr;
+            }
+        }
+
+        function formatTime(timeStr) {
+            if (!timeStr) return '-';
+            try {
+                // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
+                if (timeStr.includes('~')) {
+                    timeStr = timeStr.split('~')[0];
+                }
+                const [, time] = timeStr.split('_');
+                const [hours, minutes] = time.split('-');
+                const hour = parseInt(hours);
+                const ampm = hour < 12 ? '上午' : '下午';
+                const displayHour = hour <= 12 ? hour : hour - 12;
+                return `${ampm}${displayHour}点${minutes}分`;
+            } catch (error) {
+                console.error('Error formatting time:', error);
+                return timeStr;
             }
         }
 
@@ -612,11 +634,11 @@
             const headerRow = document.createElement('tr');
             headers.forEach(header => {
                 // 跳过直播时间和直播时长列
-                if (header !== '直播时间' && header !== '直播时长') {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    headerRow.appendChild(th);
-                }
+                if (header === '直播时间' || header === '直播时长') return;
+                
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
             });
             thead.appendChild(headerRow);
             
@@ -625,11 +647,11 @@
                 const tr = document.createElement('tr');
                 headers.forEach(header => {
                     // 跳过直播时间和直播时长列
-                    if (header !== '直播时间' && header !== '直播时长') {
-                        const td = document.createElement('td');
-                        td.textContent = row[header] || '';
-                        tr.appendChild(td);
-                    }
+                    if (header === '直播时间' || header === '直播时长') return;
+                    
+                    const td = document.createElement('td');
+                    td.textContent = row[header] || '-';
+                    tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
             });
@@ -789,33 +811,6 @@
                 const todayData = XLSX.utils.sheet_to_json(todaySheet);
                 todayContent.innerHTML = '';
                 todayContent.appendChild(createTable(todayData));
-            }
-        }
-
-        function formatTime(timeStr) {
-            if (!timeStr) return '-';
-            try {
-                // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
-                if (timeStr.includes('~')) {
-                    const [startTime] = timeStr.split('~');
-                    const time = startTime.split('_')[1];
-                    const [hours, minutes] = time.split('-');
-                    
-                    // 转换成24小时制的数字
-                    const hour = parseInt(hours);
-                    
-                    // 判断上午/下午
-                    const period = hour < 12 ? '上午' : '下午';
-                    
-                    // 转换小时为12小时制
-                    const hour12 = hour <= 12 ? hour : hour - 12;
-                    
-                    return `${period}${hour12}点${minutes}分`;
-                }
-                return timeStr;
-            } catch (error) {
-                console.error('Error formatting time:', error);
-                return timeStr;
             }
         }
 
