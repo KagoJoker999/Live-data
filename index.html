@@ -121,40 +121,41 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
             padding: 24px;
             margin-top: 20px;
+            display: flex;
+            gap: 20px;
         }
         .result-section {
             flex: 1;
             min-width: 0;
         }
-        .result-section h3 {
-            font-size: 16px;
-            font-weight: 500;
-            color: #333;
-            margin-bottom: 16px;
-        }
         .table-container {
             background-color: white;
             border-radius: 8px;
             border: 1px solid #eee;
-            overflow: hidden;
+            overflow-x: auto;
+            max-width: 100%;
         }
         table {
-            width: 100%;
+            width: max-content;
+            min-width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+        }
+        th, td {
+            white-space: nowrap;
+            padding: 12px 16px;
+            border-bottom: 1px solid #eee;
+            min-width: 100px;
         }
         th {
             background-color: #f7f7f7;
             font-weight: 500;
             color: #333;
-            padding: 12px 16px;
-            border-bottom: 1px solid #eee;
             position: sticky;
             top: 0;
+            z-index: 1;
         }
         td {
-            padding: 12px 16px;
-            border-bottom: 1px solid #f0f0f0;
             color: #666;
         }
         tr:last-child td {
@@ -162,6 +163,16 @@
         }
         tr:hover td {
             background-color: #fafafa;
+        }
+        .result-section h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 16px;
+            text-align: center;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
         }
         .tabs-container {
             display: flex;
