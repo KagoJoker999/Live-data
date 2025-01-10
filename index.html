@@ -311,6 +311,36 @@
         #commerceMetrics {
             grid-template-columns: repeat(2, 1fr);
         }
+        .basic-info-container {
+            margin: 30px 0;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+        }
+        .basic-info-grid {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+        }
+        .basic-info-item {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px 32px;
+            text-align: center;
+            min-width: 200px;
+        }
+        .basic-info-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        .basic-info-value {
+            font-size: 18px;
+            font-weight: 500;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -336,6 +366,24 @@
         </div>
 
         <button id="analyzeButton" class="analyze-button">开始分析</button>
+    </div>
+
+    <div class="basic-info-container" id="basicInfoContainer" style="display: none;">
+        <div class="comparison-title">本场基础数据</div>
+        <div class="basic-info-grid">
+            <div class="basic-info-item">
+                <div class="basic-info-label">开播日期</div>
+                <div class="basic-info-value" id="liveDate">-</div>
+            </div>
+            <div class="basic-info-item">
+                <div class="basic-info-label">开播时间</div>
+                <div class="basic-info-value" id="liveTime">-</div>
+            </div>
+            <div class="basic-info-item">
+                <div class="basic-info-label">开播时长</div>
+                <div class="basic-info-value" id="liveDuration">-</div>
+            </div>
+        </div>
     </div>
 
     <div class="comparison-container" id="comparisonContainer" style="display: none;">
@@ -789,6 +837,70 @@
             }
         }
 
+        function formatTime(timeStr) {
+            if (!timeStr) return '-';
+            try {
+                // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
+                if (timeStr.includes('~')) {
+                    const [startTime, endTime] = timeStr.split('~');
+                    const formattedStart = startTime.split('_')[1].replace(/-/g, ':');
+                    return formattedStart;
+                }
+                return timeStr;
+            } catch (error) {
+                console.error('Error formatting time:', error);
+                return timeStr;
+            }
+        }
+
+        function formatDuration(startTimeStr, endTimeStr) {
+            if (!startTimeStr || !endTimeStr) return '-';
+            try {
+                const [startDate, startTime] = startTimeStr.split('_');
+                const [endDate, endTime] = endTimeStr.split('_');
+                
+                const start = new Date(startDate.replace(/-/g, '/') + ' ' + startTime.replace(/-/g, ':'));
+                const end = new Date(endDate.replace(/-/g, '/') + ' ' + endTime.replace(/-/g, ':'));
+                
+                const durationMs = end - start;
+                const hours = Math.floor(durationMs / (1000 * 60 * 60));
+                const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                return `${hours}小时${minutes}分钟`;
+            } catch (error) {
+                console.error('Error calculating duration:', error);
+                return '-';
+            }
+        }
+
+        function updateBasicInfo(workbook) {
+            if (!workbook) return;
+            
+            try {
+                const basicSheet = workbook.Sheets['基本信息'];
+                const basicData = XLSX.utils.sheet_to_json(basicSheet)[0];
+                
+                if (basicData['直播时间']) {
+                    const timeRange = basicData['直播时间'];
+                    const [startTime, endTime] = timeRange.split('~');
+                    
+                    // 更新开播日期
+                    document.getElementById('liveDate').textContent = formatDate(startTime);
+                    
+                    // 更新开播时间
+                    document.getElementById('liveTime').textContent = formatTime(startTime);
+                    
+                    // 更新开播时长
+                    document.getElementById('liveDuration').textContent = formatDuration(startTime, endTime);
+                    
+                    // 显示容器
+                    document.getElementById('basicInfoContainer').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error updating basic info:', error);
+            }
+        }
+
         analyzeButton.addEventListener('click', async () => {
             const yesterdayFile = document.getElementById('yesterdayFile').files[0];
             const todayFile = document.getElementById('todayFile').files[0];
@@ -823,6 +935,9 @@
                 todayReader.onload = (e) => {
                     const data = new Uint8Array(e.target.result);
                     currentWorkbooks.today = XLSX.read(data, { type: 'array' });
+                    
+                    // 更新本场基础数据
+                    updateBasicInfo(currentWorkbooks.today);
                     
                     if (currentWorkbooks.yesterday) {
                         // 两个文件都已加载，创建标签页
