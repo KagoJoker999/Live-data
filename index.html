@@ -521,26 +521,12 @@
         }
 
         function formatDate(dateStr) {
-            if (!dateStr) return '';
+            if (!dateStr) return '-';
             try {
-                // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
-                if (dateStr.includes('~')) {
-                    return dateStr.split('_')[0];
-                }
-                
-                // 处理 Excel 日期格式（例如：45291.5729166667）
-                if (!isNaN(dateStr)) {
-                    const excelDate = new Date((dateStr - 25569) * 86400 * 1000);
-                    return excelDate.toISOString().split('T')[0];
-                }
-                
-                // 处理其他日期格式
-                const date = new Date(dateStr);
-                if (!isNaN(date.getTime())) {
-                    return date.toISOString().split('T')[0];
-                }
-                
-                return dateStr;
+                // 从日期字符串中提取年月日
+                const [date] = dateStr.split('_');
+                const [year, month, day] = date.split('-');
+                return `${year}年${month}月${day}日`;
             } catch (error) {
                 console.error('Error formatting date:', error);
                 return dateStr;
@@ -616,65 +602,34 @@
 
         function createTable(data) {
             if (!data || data.length === 0) return document.createElement('div');
+            
             const table = document.createElement('table');
             const thead = document.createElement('thead');
             const tbody = document.createElement('tbody');
-            
-            // 需要过滤的字段列表
-            const excludeFields = [
-                '直播间封面',
-                '直播间名称',
-                '开播平台',
-                '退款金额',
-                '违规次数'
-            ];
-            
-            // 需要除以100的字段列表
-            const divideBy100Fields = [
-                '直播间观看-互动率(次数)',
-                '直播间观看-成交率(次数)'
-            ];
-            
-            // 获取过滤后的字段
-            const filteredKeys = Object.keys(data[0]).filter(key => !excludeFields.includes(key));
+            const headers = Object.keys(data[0]);
             
             // 创建表头
             const headerRow = document.createElement('tr');
-            filteredKeys.forEach(key => {
-                const th = document.createElement('th');
-                th.textContent = key;
-                headerRow.appendChild(th);
+            headers.forEach(header => {
+                // 跳过直播时间和直播时长列
+                if (header !== '直播时间' && header !== '直播时长') {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    headerRow.appendChild(th);
+                }
             });
             thead.appendChild(headerRow);
             
-            // 创建表格内容
+            // 创建数据行
             data.forEach(row => {
                 const tr = document.createElement('tr');
-                filteredKeys.forEach(key => {
-                    const td = document.createElement('td');
-                    let value = row[key];
-                    
-                    // 如果是需要除以100的字段
-                    if (divideBy100Fields.includes(key)) {
-                        const numValue = parseFloat(value) || 0;
-                        value = (numValue / 100).toFixed(2) + '%';
+                headers.forEach(header => {
+                    // 跳过直播时间和直播时长列
+                    if (header !== '直播时间' && header !== '直播时长') {
+                        const td = document.createElement('td');
+                        td.textContent = row[header] || '';
+                        tr.appendChild(td);
                     }
-                    // 如果字段名包含"率"但不在需要除以100的字段列表中
-                    else if (key.includes('率') && !divideBy100Fields.includes(key)) {
-                        const numValue = parseFloat(value) || 0;
-                        value = (numValue * 100).toFixed(2) + '%';
-                    }
-                    // 处理其他数值类型
-                    else if (!isNaN(value) && value !== '') {
-                        const numValue = parseFloat(value);
-                        // 检查是否有小数部分
-                        if (numValue % 1 !== 0) {
-                            value = numValue.toFixed(2);
-                        }
-                    }
-                    
-                    td.textContent = value;
-                    tr.appendChild(td);
                 });
                 tbody.appendChild(tr);
             });
@@ -842,9 +797,20 @@
             try {
                 // 处理时间范围格式（例如：2025-01-06_11-23-20~2025-01-06_13-23-44）
                 if (timeStr.includes('~')) {
-                    const [startTime, endTime] = timeStr.split('~');
-                    const formattedStart = startTime.split('_')[1].replace(/-/g, ':');
-                    return formattedStart;
+                    const [startTime] = timeStr.split('~');
+                    const time = startTime.split('_')[1];
+                    const [hours, minutes] = time.split('-');
+                    
+                    // 转换成24小时制的数字
+                    const hour = parseInt(hours);
+                    
+                    // 判断上午/下午
+                    const period = hour < 12 ? '上午' : '下午';
+                    
+                    // 转换小时为12小时制
+                    const hour12 = hour <= 12 ? hour : hour - 12;
+                    
+                    return `${period}${hour12}点${minutes}分`;
                 }
                 return timeStr;
             } catch (error) {
