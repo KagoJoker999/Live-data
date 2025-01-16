@@ -140,8 +140,9 @@
             <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
           </div>
           <div class="data-info">观看人数：<span id="today-viewers">加载中...</span></div>
-          <div class="data-info">互动次数：<span id="today-interactions">加载中...</span></div>
-          <div class="data-info">直播时长：<span id="today-duration">加载中...</span></div>
+          <div class="data-info">成交金额：<span id="today-sales">加载中...</span></div>
+          <div class="data-info">成交人数：<span id="today-customers">加载中...</span></div>
+          <div class="data-info">新增粉丝：<span id="today-followers">加载中...</span></div>
         </li>
         <li class="data-item" onclick="location.href='detail.html?date=yesterday'">
           <div class="data-title">
@@ -149,8 +150,9 @@
             <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
           </div>
           <div class="data-info">观看人数：<span id="yesterday-viewers">加载中...</span></div>
-          <div class="data-info">互动次数：<span id="yesterday-interactions">加载中...</span></div>
-          <div class="data-info">直播时长：<span id="yesterday-duration">加载中...</span></div>
+          <div class="data-info">成交金额：<span id="yesterday-sales">加载中...</span></div>
+          <div class="data-info">成交人数：<span id="yesterday-customers">加载中...</span></div>
+          <div class="data-info">新增粉丝：<span id="yesterday-followers">加载中...</span></div>
         </li>
         <li class="data-item" onclick="location.href='detail.html?date=week'">
           <div class="data-title">
@@ -158,8 +160,9 @@
             <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
           </div>
           <div class="data-info">总观看人数：<span id="week-viewers">加载中...</span></div>
-          <div class="data-info">总互动次数：<span id="week-interactions">加载中...</span></div>
-          <div class="data-info">总直播时长：<span id="week-duration">加载中...</span></div>
+          <div class="data-info">总成交金额：<span id="week-sales">加载中...</span></div>
+          <div class="data-info">总成交人数：<span id="week-customers">加载中...</span></div>
+          <div class="data-info">总新增粉丝：<span id="week-followers">加载中...</span></div>
         </li>
       </ul>
       <div class="refresh-time">最后更新时间：<span id="last-update">-</span></div>
@@ -170,18 +173,23 @@
           const response = await fetch('data/stats.json');
           const data = await response.json();
 
-          // 更新显示
+          // 更新今日数据
           document.getElementById('today-viewers').textContent = data.today.viewers.toLocaleString();
-          document.getElementById('today-interactions').textContent = data.today.interactions.toLocaleString();
-          document.getElementById('today-duration').textContent = data.today.duration;
+          document.getElementById('today-sales').textContent = '¥' + data.today.sales_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById('today-customers').textContent = data.today.sales_users.toLocaleString();
+          document.getElementById('today-followers').textContent = data.today.new_followers.toLocaleString();
 
+          // 更新昨日数据
           document.getElementById('yesterday-viewers').textContent = data.yesterday.viewers.toLocaleString();
-          document.getElementById('yesterday-interactions').textContent = data.yesterday.interactions.toLocaleString();
-          document.getElementById('yesterday-duration').textContent = data.yesterday.duration;
+          document.getElementById('yesterday-sales').textContent = '¥' + data.yesterday.sales_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById('yesterday-customers').textContent = data.yesterday.sales_users.toLocaleString();
+          document.getElementById('yesterday-followers').textContent = data.yesterday.new_followers.toLocaleString();
 
+          // 更新本周数据
           document.getElementById('week-viewers').textContent = data.week.viewers.toLocaleString();
-          document.getElementById('week-interactions').textContent = data.week.interactions.toLocaleString();
-          document.getElementById('week-duration').textContent = data.week.duration;
+          document.getElementById('week-sales').textContent = '¥' + data.week.total_sales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+          document.getElementById('week-customers').textContent = data.week.total_customers.toLocaleString();
+          document.getElementById('week-followers').textContent = data.week.total_followers.toLocaleString();
 
           // 更新最后更新时间
           const lastUpdate = new Date(data.lastUpdate);
