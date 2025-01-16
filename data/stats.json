@@ -1,0 +1,38 @@
+{
+  "lastUpdate": "2025-01-16T17:27:19.425Z",
+  "today": {
+    "viewers": 0,
+    "interactions": 0,
+    "duration": "0小时0分钟",
+    "viewers_count": 0,
+    "max_online": 0,
+    "avg_online": 0,
+    "comments": 0,
+    "new_followers": 0,
+    "sales_amount": 0,
+    "sales_count": 0,
+    "sales_users": 0
+  },
+  "yesterday": {
+    "viewers": 0,
+    "interactions": 0,
+    "duration": "0小时0分钟",
+    "viewers_count": 0,
+    "max_online": 0,
+    "avg_online": 0,
+    "comments": 0,
+    "new_followers": 0,
+    "sales_amount": 0,
+    "sales_count": 0,
+    "sales_users": 0
+  },
+  "week": {
+    "viewers": 0,
+    "interactions": 0,
+    "duration": "0小时",
+    "total_sales": 0,
+    "total_orders": 0,
+    "total_customers": 0,
+    "total_followers": 0
+  }
+}
