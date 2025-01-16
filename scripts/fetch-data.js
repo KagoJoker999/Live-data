@@ -43,18 +43,25 @@ async function getTenantAccessToken() {
 async function getAllRecords(token) {
   try {
     console.log('正在获取记录...');
+    // 先尝试不使用排序参数获取数据
     const response = await instance.get(`/bitable/v1/apps/${BASE_ID}/tables/${TABLE_ID}/records`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
       params: {
-        page_size: 100,
-        sort: JSON.stringify([{"field_name": "开播日期", "order": "desc"}])
+        page_size: 100
       }
     });
     console.log('获取记录响应:', JSON.stringify(response.data, null, 2));
     if (response.data.code === 0 && response.data.data && response.data.data.items) {
-      return response.data.data.items;
+      // 在内存中对数据进行排序
+      const items = response.data.data.items;
+      items.sort((a, b) => {
+        const dateA = new Date(a.fields['开播日期'] * 1000);
+        const dateB = new Date(b.fields['开播日期'] * 1000);
+        return dateB - dateA;  // 降序排序
+      });
+      return items;
     } else {
       throw new Error('获取记录失败: ' + JSON.stringify(response.data));
     }
