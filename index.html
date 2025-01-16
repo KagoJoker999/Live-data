@@ -137,87 +137,72 @@
         <li class="data-item" onclick="location.href='detail.html?date=today'">
           <div class="data-title">
             <span>今日直播数据</span>
-            <button class="button" onclick="event.stopPropagation(); refreshData('today')">刷新</button>
+            <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
           </div>
-          <div class="data-info">观看人数：<span id="today-viewers">1,234</span></div>
-          <div class="data-info">互动次数：<span id="today-interactions">567</span></div>
-          <div class="data-info">直播时长：<span id="today-duration">2小时30分钟</span></div>
+          <div class="data-info">观看人数：<span id="today-viewers">加载中...</span></div>
+          <div class="data-info">互动次数：<span id="today-interactions">加载中...</span></div>
+          <div class="data-info">直播时长：<span id="today-duration">加载中...</span></div>
         </li>
         <li class="data-item" onclick="location.href='detail.html?date=yesterday'">
           <div class="data-title">
             <span>昨日直播数据</span>
-            <button class="button" onclick="event.stopPropagation(); refreshData('yesterday')">刷新</button>
+            <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
           </div>
-          <div class="data-info">观看人数：<span id="yesterday-viewers">2,345</span></div>
-          <div class="data-info">互动次数：<span id="yesterday-interactions">789</span></div>
-          <div class="data-info">直播时长：<span id="yesterday-duration">3小时15分钟</span></div>
+          <div class="data-info">观看人数：<span id="yesterday-viewers">加载中...</span></div>
+          <div class="data-info">互动次数：<span id="yesterday-interactions">加载中...</span></div>
+          <div class="data-info">直播时长：<span id="yesterday-duration">加载中...</span></div>
         </li>
         <li class="data-item" onclick="location.href='detail.html?date=week'">
           <div class="data-title">
             <span>本周数据统计</span>
-            <button class="button" onclick="event.stopPropagation(); refreshData('week')">刷新</button>
+            <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
           </div>
-          <div class="data-info">总观看人数：<span id="week-viewers">12,345</span></div>
-          <div class="data-info">总互动次数：<span id="week-interactions">4,567</span></div>
-          <div class="data-info">总直播时长：<span id="week-duration">15小时45分钟</span></div>
+          <div class="data-info">总观看人数：<span id="week-viewers">加载中...</span></div>
+          <div class="data-info">总互动次数：<span id="week-interactions">加载中...</span></div>
+          <div class="data-info">总直播时长：<span id="week-duration">加载中...</span></div>
         </li>
       </ul>
-      <div class="refresh-time">最后更新时间：<span id="last-update">2024-01-18 15:30:00</span></div>
+      <div class="refresh-time">最后更新时间：<span id="last-update">-</span></div>
     </div>
     <script>
-      // 刷新数据的函数
-      function refreshData(type) {
-        // 这里添加刷新数据的逻辑
-        const now = new Date();
-        document.getElementById('last-update').textContent = 
-          now.getFullYear() + '-' + 
-          String(now.getMonth() + 1).padStart(2, '0') + '-' + 
-          String(now.getDate()).padStart(2, '0') + ' ' +
-          String(now.getHours()).padStart(2, '0') + ':' +
-          String(now.getMinutes()).padStart(2, '0') + ':' +
-          String(now.getSeconds()).padStart(2, '0');
+      async function refreshData() {
+        try {
+          const response = await fetch('data/stats.json');
+          const data = await response.json();
 
-        // 模拟数据更新
-        const data = {
-          today: {
-            viewers: Math.floor(Math.random() * 5000) + 1000,
-            interactions: Math.floor(Math.random() * 1000) + 100,
-            duration: Math.floor(Math.random() * 5) + 1 + '小时' + Math.floor(Math.random() * 60) + '分钟'
-          },
-          yesterday: {
-            viewers: Math.floor(Math.random() * 5000) + 1000,
-            interactions: Math.floor(Math.random() * 1000) + 100,
-            duration: Math.floor(Math.random() * 5) + 1 + '小时' + Math.floor(Math.random() * 60) + '分钟'
-          },
-          week: {
-            viewers: Math.floor(Math.random() * 50000) + 10000,
-            interactions: Math.floor(Math.random() * 10000) + 1000,
-            duration: Math.floor(Math.random() * 50) + 10 + '小时' + Math.floor(Math.random() * 60) + '分钟'
-          }
-        };
-
-        // 更新显示
-        if (type === 'today' || type === 'all') {
+          // 更新显示
           document.getElementById('today-viewers').textContent = data.today.viewers.toLocaleString();
           document.getElementById('today-interactions').textContent = data.today.interactions.toLocaleString();
           document.getElementById('today-duration').textContent = data.today.duration;
-        }
-        if (type === 'yesterday' || type === 'all') {
+
           document.getElementById('yesterday-viewers').textContent = data.yesterday.viewers.toLocaleString();
           document.getElementById('yesterday-interactions').textContent = data.yesterday.interactions.toLocaleString();
           document.getElementById('yesterday-duration').textContent = data.yesterday.duration;
-        }
-        if (type === 'week' || type === 'all') {
+
           document.getElementById('week-viewers').textContent = data.week.viewers.toLocaleString();
           document.getElementById('week-interactions').textContent = data.week.interactions.toLocaleString();
           document.getElementById('week-duration').textContent = data.week.duration;
+
+          // 更新刷新时间
+          const updateTime = new Date(data.lastUpdate);
+          document.getElementById('last-update').textContent = 
+            updateTime.getFullYear() + '-' + 
+            String(updateTime.getMonth() + 1).padStart(2, '0') + '-' + 
+            String(updateTime.getDate()).padStart(2, '0') + ' ' +
+            String(updateTime.getHours()).padStart(2, '0') + ':' +
+            String(updateTime.getMinutes()).padStart(2, '0') + ':' +
+            String(updateTime.getSeconds()).padStart(2, '0');
+        } catch (error) {
+          console.error('获取数据失败:', error);
+          alert('获取数据失败，请稍后重试');
         }
       }
 
-      // 页面加载时刷新所有数据
-      window.onload = function() {
-        refreshData('all');
-      };
+      // 页面加载时刷新数据
+      window.onload = refreshData;
+
+      // 每分钟自动刷新一次
+      setInterval(refreshData, 60000);
     </script>
   </body>
 </html> 
