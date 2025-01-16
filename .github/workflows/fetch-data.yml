@@ -8,10 +8,12 @@ on:
 jobs:
   fetch-data:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
         with:
-          ref: main
+          ref: gh-pages
           
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -20,6 +22,11 @@ jobs:
           
       - name: Create Data Directory
         run: mkdir -p data
+          
+      - name: Create Initial Data
+        run: |
+          echo '[]' > data/raw.json
+          echo '{"lastUpdate":"","today":{"viewers":0,"interactions":0,"duration":"0小时0分钟"},"yesterday":{"viewers":0,"interactions":0,"duration":"0小时0分钟"},"week":{"viewers":0,"interactions":0,"duration":"0小时"}}' > data/stats.json
           
       - name: Fetch Feishu Data
         env:
@@ -30,6 +37,7 @@ jobs:
         run: |
           node << 'EOF'
           const https = require('https');
+          const fs = require('fs');
           
           async function getAccessToken() {
             const options = {
@@ -50,7 +58,18 @@ jobs:
               const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', (chunk) => data += chunk);
-                res.on('end', () => resolve(JSON.parse(data).tenant_access_token));
+                res.on('end', () => {
+                  try {
+                    const response = JSON.parse(data);
+                    if (response.code === 0) {
+                      resolve(response.tenant_access_token);
+                    } else {
+                      reject(new Error(`Failed to get token: ${data}`));
+                    }
+                  } catch (error) {
+                    reject(error);
+                  }
+                });
               });
               
               req.on('error', reject);
@@ -74,7 +93,18 @@ jobs:
               const req = https.request(options, (res) => {
                 let data = '';
                 res.on('data', (chunk) => data += chunk);
-                res.on('end', () => resolve(JSON.parse(data)));
+                res.on('end', () => {
+                  try {
+                    const response = JSON.parse(data);
+                    if (response.code === 0) {
+                      resolve(response.data);
+                    } else {
+                      reject(new Error(`Failed to fetch data: ${data}`));
+                    }
+                  } catch (error) {
+                    reject(error);
+                  }
+                });
               });
               
               req.on('error', reject);
@@ -84,23 +114,28 @@ jobs:
           
           async function main() {
             try {
+              console.log('Getting access token...');
               const token = await getAccessToken();
+              console.log('Token obtained successfully');
+              
+              console.log('Fetching data from Feishu...');
               const response = await fetchFeishuData(token);
-              const fs = require('fs');
+              console.log('Data fetched successfully');
               
               // 保存原始数据
-              fs.writeFileSync('data/raw.json', JSON.stringify(response.data.items));
+              fs.writeFileSync('data/raw.json', JSON.stringify(response.items, null, 2));
+              console.log('Raw data saved');
               
               // 处理并保存统计数据
               const today = new Date().toISOString().split('T')[0];
               const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
               
-              const todayData = response.data.items.find(r => r.fields.日期 === today) || {};
-              const yesterdayData = response.data.items.find(r => r.fields.日期 === yesterday) || {};
+              const todayData = response.items.find(r => r.fields.日期 === today) || {};
+              const yesterdayData = response.items.find(r => r.fields.日期 === yesterday) || {};
               
               const weekStart = new Date();
               weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-              const weekData = response.data.items.filter(r => {
+              const weekData = response.items.filter(r => {
                 const recordDate = new Date(r.fields.日期);
                 return recordDate >= weekStart;
               });
@@ -125,6 +160,7 @@ jobs:
               };
               
               fs.writeFileSync('data/stats.json', JSON.stringify(stats, null, 2));
+              console.log('Stats data saved');
             } catch (error) {
               console.error('Error:', error);
               process.exit(1);
@@ -140,4 +176,4 @@ jobs:
           git config --global user.email 'actions@github.com'
           git add data/
           git commit -m "Update data: $(date -u)" || exit 0
-          git push 
+          git push origin gh-pages 
