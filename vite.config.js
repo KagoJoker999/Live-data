@@ -5,7 +5,7 @@ import postcssPxToViewport from 'postcss-px-to-viewport'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: '/Live-data/',
+  base: './',
   plugins: [vue()],
   resolve: {
     alias: {
@@ -13,15 +13,7 @@ export default defineConfig({
     }
   },
   build: {
-    outDir: 'dist',
-    assetsDir: 'assets',
-    rollupOptions: {
-      output: {
-        entryFileNames: 'assets/js/[name].js',
-        chunkFileNames: 'assets/js/[name].js',
-        assetFileNames: 'assets/[ext]/[name].[ext]'
-      }
-    }
+    outDir: 'dist'
   },
   css: {
     postcss: {
