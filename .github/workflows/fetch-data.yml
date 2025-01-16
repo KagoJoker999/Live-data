@@ -1,0 +1,143 @@
+name: Fetch Feishu Data
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'  # 每30分钟运行一次
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          ref: main
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Create Data Directory
+        run: mkdir -p data
+          
+      - name: Fetch Feishu Data
+        env:
+          APP_ID: ${{ secrets.VITE_APP_ID }}
+          APP_SECRET: ${{ secrets.VITE_APP_SECRET }}
+          BASE_ID: ${{ secrets.VITE_BASE_ID }}
+          TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
+        run: |
+          node << 'EOF'
+          const https = require('https');
+          
+          async function getAccessToken() {
+            const options = {
+              hostname: 'open.feishu.cn',
+              path: '/open-apis/auth/v3/tenant_access_token/internal',
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            };
+          
+            const data = JSON.stringify({
+              "app_id": process.env.APP_ID,
+              "app_secret": process.env.APP_SECRET
+            });
+          
+            return new Promise((resolve, reject) => {
+              const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => resolve(JSON.parse(data).tenant_access_token));
+              });
+              
+              req.on('error', reject);
+              req.write(data);
+              req.end();
+            });
+          }
+          
+          async function fetchFeishuData(token) {
+            const options = {
+              hostname: 'open.feishu.cn',
+              path: `/open-apis/bitable/v1/apps/${process.env.BASE_ID}/tables/${process.env.TABLE_ID}/records`,
+              method: 'GET',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              }
+            };
+          
+            return new Promise((resolve, reject) => {
+              const req = https.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => resolve(JSON.parse(data)));
+              });
+              
+              req.on('error', reject);
+              req.end();
+            });
+          }
+          
+          async function main() {
+            try {
+              const token = await getAccessToken();
+              const response = await fetchFeishuData(token);
+              const fs = require('fs');
+              
+              // 保存原始数据
+              fs.writeFileSync('data/raw.json', JSON.stringify(response.data.items));
+              
+              // 处理并保存统计数据
+              const today = new Date().toISOString().split('T')[0];
+              const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+              
+              const todayData = response.data.items.find(r => r.fields.日期 === today) || {};
+              const yesterdayData = response.data.items.find(r => r.fields.日期 === yesterday) || {};
+              
+              const weekStart = new Date();
+              weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+              const weekData = response.data.items.filter(r => {
+                const recordDate = new Date(r.fields.日期);
+                return recordDate >= weekStart;
+              });
+              
+              const stats = {
+                lastUpdate: new Date().toISOString(),
+                today: {
+                  viewers: todayData.fields?.观看人数 || 0,
+                  interactions: todayData.fields?.互动次数 || 0,
+                  duration: todayData.fields?.直播时长 || '0小时0分钟'
+                },
+                yesterday: {
+                  viewers: yesterdayData.fields?.观看人数 || 0,
+                  interactions: yesterdayData.fields?.互动次数 || 0,
+                  duration: yesterdayData.fields?.直播时长 || '0小时0分钟'
+                },
+                week: {
+                  viewers: weekData.reduce((sum, r) => sum + (r.fields?.观看人数 || 0), 0),
+                  interactions: weekData.reduce((sum, r) => sum + (r.fields?.互动次数 || 0), 0),
+                  duration: weekData.reduce((sum, r) => sum + (r.fields?.直播时长?.split('小时')[0] || 0), 0) + '小时'
+                }
+              };
+              
+              fs.writeFileSync('data/stats.json', JSON.stringify(stats, null, 2));
+            } catch (error) {
+              console.error('Error:', error);
+              process.exit(1);
+            }
+          }
+          
+          main();
+          EOF
+          
+      - name: Commit and Push Data
+        run: |
+          git config --global user.name 'GitHub Actions Bot'
+          git config --global user.email 'actions@github.com'
+          git add data/
+          git commit -m "Update data: $(date -u)" || exit 0
+          git push 
