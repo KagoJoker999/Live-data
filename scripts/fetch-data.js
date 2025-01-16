@@ -49,11 +49,15 @@ async function getAllRecords(token) {
       },
       params: {
         page_size: 100,
-        sort: 'CurrentValue.开播日期:desc'
+        sort: JSON.stringify([{"field_name": "开播日期", "order": "desc"}])
       }
     });
     console.log('获取记录响应:', JSON.stringify(response.data, null, 2));
-    return response.data.data.items;
+    if (response.data.code === 0 && response.data.data && response.data.data.items) {
+      return response.data.data.items;
+    } else {
+      throw new Error('获取记录失败: ' + JSON.stringify(response.data));
+    }
   } catch (error) {
     console.error('获取记录失败:', error.response?.data || error.message);
     throw error;
