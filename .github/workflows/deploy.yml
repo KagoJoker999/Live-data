@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -17,11 +17,11 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  deploy:
+  build-and-deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,164 +31,32 @@ jobs:
         with:
           node-version: '18'
           
+      - name: Install Dependencies
+        run: npm install
+          
       - name: Create Data Directory
         run: mkdir -p data
-          
-      - name: Create Initial Data
-        run: |
-          echo '[]' > data/raw.json
-          echo '{"lastUpdate":"","today":{"viewers":0,"interactions":0,"duration":"0小时0分钟"},"yesterday":{"viewers":0,"interactions":0,"duration":"0小时0分钟"},"week":{"viewers":0,"interactions":0,"duration":"0小时"}}' > data/stats.json
-          
-      - name: Fetch Feishu Data
-        env:
-          APP_ID: ${{ secrets.VITE_APP_ID }}
-          APP_SECRET: ${{ secrets.VITE_APP_SECRET }}
-          BASE_ID: ${{ secrets.VITE_BASE_ID }}
-          TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
-        run: |
-          node << 'EOF'
-          const https = require('https');
-          const fs = require('fs');
-          
-          async function getAccessToken() {
-            const options = {
-              hostname: 'open.feishu.cn',
-              path: '/open-apis/auth/v3/tenant_access_token/internal',
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              }
-            };
-          
-            const data = JSON.stringify({
-              "app_id": process.env.APP_ID,
-              "app_secret": process.env.APP_SECRET
-            });
-          
-            return new Promise((resolve, reject) => {
-              const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', (chunk) => data += chunk);
-                res.on('end', () => {
-                  try {
-                    const response = JSON.parse(data);
-                    if (response.code === 0) {
-                      resolve(response.tenant_access_token);
-                    } else {
-                      reject(new Error(`Failed to get token: ${data}`));
-                    }
-                  } catch (error) {
-                    reject(error);
-                  }
-                });
-              });
-              
-              req.on('error', reject);
-              req.write(data);
-              req.end();
-            });
-          }
-          
-          async function fetchFeishuData(token) {
-            const options = {
-              hostname: 'open.feishu.cn',
-              path: `/open-apis/bitable/v1/apps/${process.env.BASE_ID}/tables/${process.env.TABLE_ID}/records`,
-              method: 'GET',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              }
-            };
-          
-            return new Promise((resolve, reject) => {
-              const req = https.request(options, (res) => {
-                let data = '';
-                res.on('data', (chunk) => data += chunk);
-                res.on('end', () => {
-                  try {
-                    const response = JSON.parse(data);
-                    if (response.code === 0) {
-                      resolve(response.data);
-                    } else {
-                      reject(new Error(`Failed to fetch data: ${data}`));
-                    }
-                  } catch (error) {
-                    reject(error);
-                  }
-                });
-              });
-              
-              req.on('error', reject);
-              req.end();
-            });
-          }
-          
-          async function main() {
-            try {
-              console.log('Getting access token...');
-              const token = await getAccessToken();
-              console.log('Token obtained successfully');
-              
-              console.log('Fetching data from Feishu...');
-              const response = await fetchFeishuData(token);
-              console.log('Data fetched successfully');
-              
-              // 保存原始数据
-              fs.writeFileSync('data/raw.json', JSON.stringify(response.items, null, 2));
-              console.log('Raw data saved');
-              
-              // 处理并保存统计数据
-              const today = new Date().toISOString().split('T')[0];
-              const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-              
-              const todayData = response.items.find(r => r.fields.日期 === today) || {};
-              const yesterdayData = response.items.find(r => r.fields.日期 === yesterday) || {};
-              
-              const weekStart = new Date();
-              weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-              const weekData = response.items.filter(r => {
-                const recordDate = new Date(r.fields.日期);
-                return recordDate >= weekStart;
-              });
-              
-              const stats = {
-                lastUpdate: new Date().toISOString(),
-                today: {
-                  viewers: todayData.fields?.观看人数 || 0,
-                  interactions: todayData.fields?.互动次数 || 0,
-                  duration: todayData.fields?.直播时长 || '0小时0分钟'
-                },
-                yesterday: {
-                  viewers: yesterdayData.fields?.观看人数 || 0,
-                  interactions: yesterdayData.fields?.互动次数 || 0,
-                  duration: yesterdayData.fields?.直播时长 || '0小时0分钟'
-                },
-                week: {
-                  viewers: weekData.reduce((sum, r) => sum + (r.fields?.观看人数 || 0), 0),
-                  interactions: weekData.reduce((sum, r) => sum + (r.fields?.互动次数 || 0), 0),
-                  duration: weekData.reduce((sum, r) => sum + (r.fields?.直播时长?.split('小时')[0] || 0), 0) + '小时'
-                }
-              };
-              
-              fs.writeFileSync('data/stats.json', JSON.stringify(stats, null, 2));
-              console.log('Stats data saved');
-            } catch (error) {
-              console.error('Error:', error);
-              process.exit(1);
-            }
-          }
-          
-          main();
-          EOF
-      
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
         
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: '.'
+      - name: Fetch Data from Feishu
+        env:
+          VITE_APP_ID: ${{ secrets.VITE_APP_ID }}
+          VITE_APP_SECRET: ${{ secrets.VITE_APP_SECRET }}
+          VITE_BASE_ID: ${{ secrets.VITE_BASE_ID }}
+          VITE_TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
+        run: |
+          node scripts/fetch-data.js
           
+      - name: Build
+        env:
+          VITE_APP_ID: ${{ secrets.VITE_APP_ID }}
+          VITE_APP_SECRET: ${{ secrets.VITE_APP_SECRET }}
+          VITE_BASE_ID: ${{ secrets.VITE_BASE_ID }}
+          VITE_TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
+        run: npm run build
+        
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          clean: true
