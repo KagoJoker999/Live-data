@@ -9,22 +9,17 @@ export default defineConfig({
   plugins: [vue()],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'vue': 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
   build: {
     outDir: 'dist',
-    assetsDir: '',
+    assetsDir: 'assets',
     rollupOptions: {
-      external: ['vue'],
       output: {
         chunkFileNames: 'js/[name]-[hash].js',
         entryFileNames: 'js/[name]-[hash].js',
-        assetFileNames: '[ext]/[name]-[hash].[ext]',
-        globals: {
-          vue: 'Vue'
-        }
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]'
       }
     }
   },
