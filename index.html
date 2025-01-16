@@ -183,23 +183,17 @@
           document.getElementById('week-interactions').textContent = data.week.interactions.toLocaleString();
           document.getElementById('week-duration').textContent = data.week.duration;
 
-          // 更新刷新时间
-          const updateTime = new Date(data.lastUpdate);
-          document.getElementById('last-update').textContent = 
-            updateTime.getFullYear() + '-' + 
-            String(updateTime.getMonth() + 1).padStart(2, '0') + '-' + 
-            String(updateTime.getDate()).padStart(2, '0') + ' ' +
-            String(updateTime.getHours()).padStart(2, '0') + ':' +
-            String(updateTime.getMinutes()).padStart(2, '0') + ':' +
-            String(updateTime.getSeconds()).padStart(2, '0');
+          // 更新最后更新时间
+          const lastUpdate = new Date(data.lastUpdate);
+          document.getElementById('last-update').textContent = lastUpdate.toLocaleString();
         } catch (error) {
-          console.error('获取数据失败:', error);
-          alert('获取数据失败，请稍后重试');
+          console.error('刷新数据失败:', error);
+          alert('刷新数据失败，请稍后重试');
         }
       }
 
-      // 页面加载时刷新数据
-      window.onload = refreshData;
+      // 页面加载时自动刷新数据
+      refreshData();
 
       // 每分钟自动刷新一次
       setInterval(refreshData, 60000);
