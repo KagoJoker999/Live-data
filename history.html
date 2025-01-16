@@ -204,10 +204,10 @@
           // 过滤日期范围内的数据
           const filteredData = rawData
             .filter(item => {
-              const date = item.fields.日期;
+              const date = item.date;
               return date >= startDate && date <= endDate;
             })
-            .sort((a, b) => b.fields.日期.localeCompare(a.fields.日期)); // 按日期降序排序
+            .sort((a, b) => b.date.localeCompare(a.date)); // 按日期降序排序
 
           // 更新表格
           const tbody = document.getElementById('data-body');
@@ -216,33 +216,21 @@
           filteredData.forEach(item => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td>${item.fields.日期}</td>
-              <td>${(item.fields.观看人数 || 0).toLocaleString()}</td>
-              <td>${(item.fields.互动次数 || 0).toLocaleString()}</td>
-              <td>${item.fields.直播时长 || '0小时0分钟'}</td>
+              <td>${item.date}</td>
+              <td>${item.data.viewers.toLocaleString()}</td>
+              <td>${item.data.interactions.toLocaleString()}</td>
+              <td>${item.data.duration}</td>
               <td>
-                <button class="button" onclick="location.href='detail.html?date=${item.fields.日期}'">
+                <button class="button" onclick="location.href='detail.html?date=${item.date}'">
                   详情
                 </button>
               </td>
             `;
             tbody.appendChild(tr);
           });
-
-          // 更新最后更新时间
-          const statsResponse = await fetch('data/stats.json');
-          const statsData = await statsResponse.json();
-          const updateTime = new Date(statsData.lastUpdate);
-          document.getElementById('last-update').textContent = 
-            updateTime.getFullYear() + '-' + 
-            String(updateTime.getMonth() + 1).padStart(2, '0') + '-' + 
-            String(updateTime.getDate()).padStart(2, '0') + ' ' +
-            String(updateTime.getHours()).padStart(2, '0') + ':' +
-            String(updateTime.getMinutes()).padStart(2, '0') + ':' +
-            String(updateTime.getSeconds()).padStart(2, '0');
         } catch (error) {
-          console.error('获取数据失败:', error);
-          alert('获取数据失败，请稍后重试');
+          console.error('查询数据失败:', error);
+          alert('查询数据失败，请稍后重试');
         }
       }
 

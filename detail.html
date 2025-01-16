@@ -156,11 +156,19 @@
             // 从原始数据中获取特定日期的数据
             const response = await fetch('data/raw.json');
             const rawData = await response.json();
-            const dayData = rawData.find(item => item.fields.日期 === date) || {};
-            data = {
-              viewers: dayData.fields?.观看人数 || 0,
-              interactions: dayData.fields?.互动次数 || 0,
-              duration: dayData.fields?.直播时长 || '0小时0分钟'
+            const dayData = rawData.find(item => item.date === date) || {};
+            data = dayData.data || {
+              viewers: 0,
+              interactions: 0,
+              duration: '0小时0分钟',
+              viewers_count: 0,
+              max_online: 0,
+              avg_online: 0,
+              comments: 0,
+              new_followers: 0,
+              sales_amount: 0,
+              sales_count: 0,
+              sales_users: 0
             };
           }
 
@@ -172,34 +180,56 @@
               <div class="detail-value">${data.viewers.toLocaleString()}</div>
             </div>
             <div class="detail-item">
-              <div class="detail-label">互动次数</div>
-              <div class="detail-value">${data.interactions.toLocaleString()}</div>
+              <div class="detail-label">观看人次</div>
+              <div class="detail-value">${data.viewers_count.toLocaleString()}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">最高在线</div>
+              <div class="detail-value">${data.max_online.toLocaleString()}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">平均在线</div>
+              <div class="detail-value">${data.avg_online.toLocaleString()}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">评论次数</div>
+              <div class="detail-value">${data.comments.toLocaleString()}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">新增粉丝</div>
+              <div class="detail-value">${data.new_followers.toLocaleString()}</div>
             </div>
             <div class="detail-item">
               <div class="detail-label">直播时长</div>
               <div class="detail-value">${data.duration}</div>
             </div>
+            <div class="detail-item">
+              <div class="detail-label">成交金额</div>
+              <div class="detail-value">¥${data.sales_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">成交件数</div>
+              <div class="detail-value">${data.sales_count.toLocaleString()}</div>
+            </div>
+            <div class="detail-item">
+              <div class="detail-label">成交人数</div>
+              <div class="detail-value">${data.sales_users.toLocaleString()}</div>
+            </div>
           `;
 
           // 更新最后更新时间
-          const statsResponse = await fetch('data/stats.json');
-          const statsData = await statsResponse.json();
-          const updateTime = new Date(statsData.lastUpdate);
-          document.getElementById('last-update').textContent = 
-            updateTime.getFullYear() + '-' + 
-            String(updateTime.getMonth() + 1).padStart(2, '0') + '-' + 
-            String(updateTime.getDate()).padStart(2, '0') + ' ' +
-            String(updateTime.getHours()).padStart(2, '0') + ':' +
-            String(updateTime.getMinutes()).padStart(2, '0') + ':' +
-            String(updateTime.getSeconds()).padStart(2, '0');
+          const response = await fetch('data/stats.json');
+          const stats = await response.json();
+          const lastUpdate = new Date(stats.lastUpdate);
+          document.getElementById('last-update').textContent = lastUpdate.toLocaleString();
         } catch (error) {
-          console.error('获取数据失败:', error);
-          alert('获取数据失败，请稍后重试');
+          console.error('刷新数据失败:', error);
+          alert('刷新数据失败，请稍后重试');
         }
       }
 
-      // 页面加载时刷新数据
-      window.onload = refreshData;
+      // 页面加载时自动刷新数据
+      refreshData();
 
       // 每分钟自动刷新一次
       setInterval(refreshData, 60000);
