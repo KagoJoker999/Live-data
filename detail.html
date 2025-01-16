@@ -149,12 +149,12 @@
           let data;
           if (date === 'today' || date === 'yesterday' || date === 'week') {
             // 从统计数据中获取
-            const response = await fetch('data/stats.json');
+            const response = await fetch('/Live-data/data/stats.json');
             const stats = await response.json();
             data = stats[date];
           } else {
             // 从原始数据中获取特定日期的数据
-            const response = await fetch('data/raw.json');
+            const response = await fetch('/Live-data/data/raw.json');
             const rawData = await response.json();
             const dayData = rawData.find(item => item.date === date) || {};
             data = dayData.data || {
@@ -218,7 +218,7 @@
           `;
 
           // 更新最后更新时间
-          const response = await fetch('data/stats.json');
+          const response = await fetch('/Live-data/data/stats.json');
           const stats = await response.json();
           const lastUpdate = new Date(stats.lastUpdate);
           document.getElementById('last-update').textContent = lastUpdate.toLocaleString();

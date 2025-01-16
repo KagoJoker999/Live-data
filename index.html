@@ -170,7 +170,7 @@
     <script>
       async function refreshData() {
         try {
-          const response = await fetch('data/stats.json');
+          const response = await fetch('/Live-data/data/stats.json');
           const data = await response.json();
 
           // 更新今日数据

@@ -198,7 +198,7 @@
           const endDate = document.getElementById('end-date').value;
           const dataType = document.getElementById('data-type').value;
 
-          const response = await fetch('data/raw.json');
+          const response = await fetch('/Live-data/data/raw.json');
           const rawData = await response.json();
           
           // 过滤日期范围内的数据
