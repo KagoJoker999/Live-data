@@ -99,17 +99,13 @@ jobs:
             echo "错误: stats.json 不存在"
             exit 1
           fi
-          
-      - name: Build
-        env:
-          VITE_APP_ID: ${{ secrets.VITE_APP_ID }}
-          VITE_APP_SECRET: ${{ secrets.VITE_APP_SECRET }}
-          VITE_BASE_ID: ${{ secrets.VITE_BASE_ID }}
-          VITE_TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
+
+      - name: Copy Static Files
         run: |
-          echo "开始构建..."
-          npm run build
-          echo "构建完成，检查 dist 目录:"
+          echo "复制静态文件..."
+          mkdir -p dist
+          cp -r index.html detail.html history.html data dist/
+          echo "dist 目录内容:"
           ls -la dist/
         
       - name: Deploy to GitHub Pages
