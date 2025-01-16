@@ -54,9 +54,19 @@ async function getAllRecords(token) {
     console.log('获取记录响应:', JSON.stringify(response.data, null, 2));
     if (response.data.code === 0 && response.data.data && response.data.data.items) {
       const items = response.data.data.items;
+      console.log('原始记录:', JSON.stringify(items, null, 2));
+      
       items.sort((a, b) => {
-        const dateA = new Date(a.fields['开播日期'] * 1000);
-        const dateB = new Date(b.fields['开播日期'] * 1000);
+        // 检查时间戳格式
+        const timestampA = a.fields['开播日期'];
+        const timestampB = b.fields['开播日期'];
+        console.log(`记录A时间戳: ${timestampA}, 记录B时间戳: ${timestampB}`);
+        
+        // 如果时间戳长度大于10，说明是毫秒级时间戳
+        const dateA = new Date(timestampA > 9999999999 ? timestampA : timestampA * 1000);
+        const dateB = new Date(timestampB > 9999999999 ? timestampB : timestampB * 1000);
+        
+        console.log(`处理后日期A: ${dateA.toISOString()}, 日期B: ${dateB.toISOString()}`);
         return dateB - dateA;  // 降序排序
       });
       return items;
@@ -103,26 +113,33 @@ async function main() {
     // 处理每天的数据
     const dailyData = dates.map(date => {
       const dayData = records.find(r => {
-        const recordDate = new Date(r.fields['开播日期'] * 1000);
-        return formatDate(recordDate) === date;
+        const timestamp = r.fields['开播日期'];
+        // 根据时间戳长度判断是秒级还是毫秒级
+        const recordDate = new Date(timestamp > 9999999999 ? timestamp : timestamp * 1000);
+        const formattedDate = formatDate(recordDate);
+        console.log(`比较日期 - 目标: ${date}, 记录: ${formattedDate}, 原始时间戳: ${timestamp}`);
+        return formattedDate === date;
       }) || { fields: {} };
       
-      return {
-        date,
-        data: {
-          viewers: parseInt(dayData.fields['直播间观看人数'] || 0),
-          interactions: parseInt(dayData.fields['评论次数'] || 0),
-          duration: dayData.fields['开播时长'] || '0小时0分钟',
-          viewers_count: parseInt(dayData.fields['直播间观看人次'] || 0),
-          max_online: parseInt(dayData.fields['最高在线人数'] || 0),
-          avg_online: parseInt(dayData.fields['平均在线人数'] || 0),
-          comments: parseInt(dayData.fields['评论次数'] || 0),
-          new_followers: parseInt(dayData.fields['新增粉丝数'] || 0),
-          sales_amount: parseFloat(dayData.fields['直播间成交金额'] || 0),
-          sales_count: parseInt(dayData.fields['直播间成交件数'] || 0),
-          sales_users: parseInt(dayData.fields['直播间成交人数'] || 0)
-        }
+      console.log(`处理 ${date} 的数据:`, JSON.stringify(dayData.fields, null, 2));
+      
+      const data = {
+        viewers: parseInt(dayData.fields['直播间观看人数'] || 0),
+        interactions: parseInt(dayData.fields['评论次数'] || 0),
+        duration: dayData.fields['开播时长'] || '0小时0分钟',
+        viewers_count: parseInt(dayData.fields['直播间观看人次'] || 0),
+        max_online: parseInt(dayData.fields['最高在线人数'] || 0),
+        avg_online: parseInt(dayData.fields['平均在线人数'] || 0),
+        comments: parseInt(dayData.fields['评论次数'] || 0),
+        new_followers: parseInt(dayData.fields['新增粉丝数'] || 0),
+        sales_amount: parseFloat(dayData.fields['直播间成交金额'] || 0),
+        sales_count: parseInt(dayData.fields['直播间成交件数'] || 0),
+        sales_users: parseInt(dayData.fields['直播间成交人数'] || 0)
       };
+      
+      console.log(`${date} 处理后的数据:`, JSON.stringify(data, null, 2));
+      
+      return { date, data };
     });
     
     // 生成统计数据
