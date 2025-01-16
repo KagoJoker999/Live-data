@@ -43,7 +43,6 @@ async function getTenantAccessToken() {
 async function getAllRecords(token) {
   try {
     console.log('正在获取记录...');
-    // 先尝试不使用排序参数获取数据
     const response = await instance.get(`/bitable/v1/apps/${BASE_ID}/tables/${TABLE_ID}/records`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -54,7 +53,6 @@ async function getAllRecords(token) {
     });
     console.log('获取记录响应:', JSON.stringify(response.data, null, 2));
     if (response.data.code === 0 && response.data.data && response.data.data.items) {
-      // 在内存中对数据进行排序
       const items = response.data.data.items;
       items.sort((a, b) => {
         const dateA = new Date(a.fields['开播日期'] * 1000);
@@ -71,6 +69,14 @@ async function getAllRecords(token) {
   }
 }
 
+// 格式化日期为 YYYY-MM-DD
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 async function main() {
   try {
     console.log('开始获取数据...');
@@ -84,82 +90,73 @@ async function main() {
     const records = await getAllRecords(token);
     console.log(`成功获取 ${records.length} 条记录`);
     
-    if (records.length > 0) {
-      console.log('第一条记录示例:', JSON.stringify(records[0], null, 2));
-    }
-    
-    // 保存原始数据
-    const rawDataPath = path.join(__dirname, '..', 'data', 'raw.json');
-    fs.writeFileSync(rawDataPath, JSON.stringify(records, null, 2));
-    console.log('原始数据已保存到:', rawDataPath);
-    
-    // 处理统计数据
+    // 获取最近7天的日期范围
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    console.log('查找今日数据，日期:', today.toISOString());
-    const todayData = records.find(r => {
-      const recordDate = new Date(r.fields['开播日期'] * 1000);
-      console.log('比对记录日期:', recordDate.toISOString(), '字段值:', r.fields['开播日期']);
-      return recordDate.getDate() === today.getDate() &&
-             recordDate.getMonth() === today.getMonth() &&
-             recordDate.getFullYear() === today.getFullYear();
-    }) || { fields: {} };
-    
-    console.log('今日数据:', JSON.stringify(todayData, null, 2));
-    
-    console.log('查找昨日数据，日期:', yesterday.toISOString());
-    const yesterdayData = records.find(r => {
-      const recordDate = new Date(r.fields['开播日期'] * 1000);
-      return recordDate.getDate() === yesterday.getDate() &&
-             recordDate.getMonth() === yesterday.getMonth() &&
-             recordDate.getFullYear() === yesterday.getFullYear();
-    }) || { fields: {} };
-    
-    console.log('昨日数据:', JSON.stringify(yesterdayData, null, 2));
-    
-    // 获取本周数据
-    const weekStart = new Date(today);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    console.log('本周开始日期:', weekStart.toISOString());
-    
-    const weekData = records.filter(r => {
-      const recordDate = new Date(r.fields['开播日期'] * 1000);
-      return recordDate >= weekStart;
+    const dates = Array.from({length: 7}, (_, i) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - i);
+      return formatDate(date);
     });
     
-    console.log('本周数据条数:', weekData.length);
+    console.log('需要获取的日期:', dates);
     
+    // 处理每天的数据
+    const dailyData = dates.map(date => {
+      const dayData = records.find(r => {
+        const recordDate = new Date(r.fields['开播日期'] * 1000);
+        return formatDate(recordDate) === date;
+      }) || { fields: {} };
+      
+      return {
+        date,
+        data: {
+          viewers: parseInt(dayData.fields['直播间观看人数'] || 0),
+          interactions: parseInt(dayData.fields['评论次数'] || 0),
+          duration: dayData.fields['开播时长'] || '0小时0分钟',
+          viewers_count: parseInt(dayData.fields['直播间观看人次'] || 0),
+          max_online: parseInt(dayData.fields['最高在线人数'] || 0),
+          avg_online: parseInt(dayData.fields['平均在线人数'] || 0),
+          comments: parseInt(dayData.fields['评论次数'] || 0),
+          new_followers: parseInt(dayData.fields['新增粉丝数'] || 0),
+          sales_amount: parseFloat(dayData.fields['直播间成交金额'] || 0),
+          sales_count: parseInt(dayData.fields['直播间成交件数'] || 0),
+          sales_users: parseInt(dayData.fields['直播间成交人数'] || 0)
+        }
+      };
+    });
+    
+    // 生成统计数据
     const stats = {
       lastUpdate: now.toISOString(),
-      today: {
-        viewers: parseInt(todayData.fields['直播间观看人数'] || 0),
-        interactions: parseInt(todayData.fields['评论次数'] || 0),
-        duration: todayData.fields['开播时长'] || '0小时0分钟'
-      },
-      yesterday: {
-        viewers: parseInt(yesterdayData.fields['直播间观看人数'] || 0),
-        interactions: parseInt(yesterdayData.fields['评论次数'] || 0),
-        duration: yesterdayData.fields['开播时长'] || '0小时0分钟'
-      },
+      today: dailyData[0].data,
+      yesterday: dailyData[1].data,
       week: {
-        viewers: weekData.reduce((sum, r) => sum + parseInt(r.fields['直播间观看人数'] || 0), 0),
-        interactions: weekData.reduce((sum, r) => sum + parseInt(r.fields['评论次数'] || 0), 0),
-        duration: weekData.reduce((sum, r) => {
-          const hours = parseInt(r.fields['开播时长']?.split('小时')[0] || 0);
+        viewers: dailyData.reduce((sum, day) => sum + day.data.viewers, 0),
+        interactions: dailyData.reduce((sum, day) => sum + day.data.interactions, 0),
+        duration: dailyData.reduce((sum, day) => {
+          const hours = parseInt(day.data.duration?.split('小时')[0] || 0);
           return sum + hours;
-        }, 0) + '小时'
+        }, 0) + '小时',
+        total_sales: dailyData.reduce((sum, day) => sum + day.data.sales_amount, 0),
+        total_orders: dailyData.reduce((sum, day) => sum + day.data.sales_count, 0),
+        total_customers: dailyData.reduce((sum, day) => sum + day.data.sales_users, 0),
+        total_followers: dailyData.reduce((sum, day) => sum + day.data.new_followers, 0)
       }
     };
     
-    console.log('生成的统计数据:', JSON.stringify(stats, null, 2));
+    // 保存原始数据
+    const rawDataPath = path.join(__dirname, '..', 'data', 'raw.json');
+    fs.writeFileSync(rawDataPath, JSON.stringify(dailyData, null, 2));
+    console.log('原始数据已保存到:', rawDataPath);
     
     // 保存统计数据
     const statsDataPath = path.join(__dirname, '..', 'data', 'stats.json');
     fs.writeFileSync(statsDataPath, JSON.stringify(stats, null, 2));
     console.log('统计数据已保存到:', statsDataPath);
+    
+    console.log('数据处理完成。');
+    console.log('7天数据概览:', dailyData.map(d => `${d.date}: ${d.data.viewers}人观看`));
+    console.log('统计数据:', JSON.stringify(stats, null, 2));
     
   } catch (error) {
     console.error('执行失败:', error);
