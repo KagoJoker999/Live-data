@@ -30,9 +30,12 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
           
       - name: Install Dependencies
-        run: npm install
+        run: |
+          npm install
+          npm install axios
           
       - name: Create Data Directory
         run: mkdir -p data
@@ -44,7 +47,46 @@ jobs:
           VITE_BASE_ID: ${{ secrets.VITE_BASE_ID }}
           VITE_TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
         run: |
+          echo "检查环境变量是否设置..."
+          if [ -z "$VITE_APP_ID" ]; then
+            echo "错误: VITE_APP_ID 未设置"
+            exit 1
+          fi
+          if [ -z "$VITE_APP_SECRET" ]; then
+            echo "错误: VITE_APP_SECRET 未设置"
+            exit 1
+          fi
+          if [ -z "$VITE_BASE_ID" ]; then
+            echo "错误: VITE_BASE_ID 未设置"
+            exit 1
+          fi
+          if [ -z "$VITE_TABLE_ID" ]; then
+            echo "错误: VITE_TABLE_ID 未设置"
+            exit 1
+          fi
+          echo "所有环境变量已正确设置"
+          echo "开始获取数据..."
           node scripts/fetch-data.js
+          
+      - name: Check Data Files
+        run: |
+          echo "检查数据文件..."
+          if [ -f "data/raw.json" ]; then
+            echo "raw.json 存在"
+            echo "文件内容预览:"
+            head -n 20 data/raw.json
+          else
+            echo "错误: raw.json 不存在"
+            exit 1
+          fi
+          if [ -f "data/stats.json" ]; then
+            echo "stats.json 存在"
+            echo "文件内容:"
+            cat data/stats.json
+          else
+            echo "错误: stats.json 不存在"
+            exit 1
+          fi
           
       - name: Build
         env:
