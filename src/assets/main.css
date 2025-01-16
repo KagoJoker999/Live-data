@@ -1,0 +1,79 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  background-color: #f7f8fa;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #323233;
+}
+
+/* iOS style overrides */
+.van-nav-bar {
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  backdrop-filter: blur(10px);
+}
+
+.van-nav-bar__title {
+  font-weight: 600 !important;
+}
+
+.van-cell-group--inset {
+  margin: 12px !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+}
+
+.van-cell {
+  align-items: center !important;
+}
+
+.van-cell__title {
+  flex: none !important;
+  width: 120px !important;
+}
+
+.van-cell__value {
+  flex: 1 !important;
+  text-align: right !important;
+  color: #1989fa !important;
+}
+
+.van-tag {
+  border-radius: 4px !important;
+}
+
+.van-empty {
+  padding: 32px 0 !important;
+}
+
+.van-tabbar {
+  border-top: none !important;
+  box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1) !important;
+  backdrop-filter: blur(10px) !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Custom classes */
+.page-content {
+  padding-bottom: 50px;
+}
+
+.loading-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}
+
+.loading-wrapper p {
+  margin-top: 12px;
+  color: #969799;
+} 
