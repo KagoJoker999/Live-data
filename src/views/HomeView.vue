@@ -5,16 +5,30 @@
     <div class="page-content">
       <template v-if="loading">
         <div class="loading-wrapper">
-          <van-loading type="spinner" color="#1989fa" />
-          <p>加载中...</p>
+          <van-loading type="spinner" color="#1989fa" size="36" />
+          <p>正在加载数据...</p>
         </div>
       </template>
       
       <template v-else-if="error">
-        <van-empty
-          image="error"
-          :description="error"
-        />
+        <div class="error-wrapper">
+          <van-empty
+            image="error"
+            :description="error"
+          >
+            <template #bottom>
+              <van-button round type="primary" @click="fetchLatestData">
+                重新加载
+              </van-button>
+            </template>
+          </van-empty>
+        </div>
+      </template>
+      
+      <template v-else-if="!latestData">
+        <div class="empty-wrapper">
+          <van-empty description="暂无数据" />
+        </div>
       </template>
       
       <template v-else>
@@ -100,10 +114,18 @@ async function fetchLatestData() {
   try {
     loading.value = true
     error.value = ''
-    latestData.value = await getLatestRecord()
+    latestData.value = null
+    
+    const data = await getLatestRecord()
+    if (!data) {
+      error.value = '未找到数据'
+      return
+    }
+    
+    latestData.value = data
   } catch (err) {
-    error.value = '数据加载失败，请稍后重试'
     console.error('获取最新数据失败:', err)
+    error.value = '数据加载失败，请检查网络连接或稍后重试'
   } finally {
     loading.value = false
   }
@@ -119,17 +141,21 @@ onMounted(() => {
   padding-bottom: 50px;
 }
 
-.loading-wrapper {
+.loading-wrapper,
+.error-wrapper,
+.empty-wrapper {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 200px;
+  min-height: 300px;
+  padding: 20px;
 }
 
 .loading-wrapper p {
-  margin-top: 12px;
+  margin-top: 16px;
   color: #969799;
+  font-size: 14px;
 }
 
 .van-cell-group {
@@ -140,5 +166,9 @@ onMounted(() => {
   padding: 0 16px;
   font-size: 14px;
   color: #969799;
+}
+
+.van-button {
+  margin-top: 16px;
 }
 </style> 
