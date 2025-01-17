@@ -201,8 +201,7 @@
 
           console.log('查询参数:', { startDate, endDate, dataType });
           
-          const baseUrl = window.location.pathname.includes('/Live-data/') ? '/Live-data/' : '/';
-          const response = await fetch(`${baseUrl}data/raw.json`);
+          const response = await fetch('data/raw.json');
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }

@@ -171,9 +171,7 @@
       async function refreshData() {
         try {
           console.log('开始获取数据...');
-          // 使用基础路径
-          const baseUrl = window.location.pathname.includes('/Live-data/') ? '/Live-data/' : '/';
-          const response = await fetch(`${baseUrl}data/stats.json`);
+          const response = await fetch('data/stats.json');
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }

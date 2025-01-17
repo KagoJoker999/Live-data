@@ -35,10 +35,7 @@ jobs:
         run: |
           echo "安装项目依赖..."
           npm install
-          echo "安装完成，检查 node_modules..."
-          ls -la node_modules
-          echo "检查 package.json..."
-          cat package.json
+          echo "安装完成"
           
       - name: Create Data Directory
         run: mkdir -p data
@@ -69,51 +66,40 @@ jobs:
           fi
           echo "所有环境变量已正确设置"
           echo "开始获取数据..."
-          echo "当前目录内容:"
-          ls -la
-          echo "scripts 目录内容:"
-          ls -la scripts/
-          echo "执行数据获取脚本..."
-          node --trace-warnings scripts/fetch-data.js
+          node scripts/fetch-data.js
           
       - name: Check Data Files
         run: |
           echo "检查数据文件..."
-          echo "当前目录内容:"
-          ls -la
-          echo "data 目录内容:"
-          ls -la data/
-          if [ -f "data/raw.json" ]; then
-            echo "raw.json 存在"
-            echo "文件内容预览:"
-            head -n 20 data/raw.json
-          else
+          if [ ! -f "data/raw.json" ]; then
             echo "错误: raw.json 不存在"
             exit 1
           fi
-          if [ -f "data/stats.json" ]; then
-            echo "stats.json 存在"
-            echo "文件内容:"
-            cat data/stats.json
-          else
+          if [ ! -f "data/stats.json" ]; then
             echo "错误: stats.json 不存在"
             exit 1
           fi
+          echo "数据文件检查通过"
+          echo "raw.json 内容预览:"
+          head -n 20 data/raw.json
+          echo "stats.json 内容:"
+          cat data/stats.json
 
-      - name: Prepare Deployment Files
+      - name: Setup Pages
+        uses: actions/configure-pages@v3
+
+      - name: Build with Vite
         run: |
-          echo "准备部署文件..."
-          mkdir -p dist
-          cp index.html detail.html history.html dist/
-          cp -r data dist/
-          echo "dist 目录内容:"
+          echo "开始构建..."
+          npm run build
+          echo "构建完成，检查 dist 目录:"
           ls -la dist/
-          echo "dist/data 目录内容:"
-          ls -la dist/data/
           
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
         with:
-          folder: dist
-          branch: gh-pages
-          clean: true
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v2

@@ -10,16 +10,9 @@
     "fetch-data": "node scripts/fetch-data.js"
   },
   "dependencies": {
-    "vue": "^3.3.4",
-    "vue-router": "^4.2.4",
-    "vant": "^4.6.4",
-    "axios": "^1.4.0",
-    "dayjs": "^1.11.9"
+    "axios": "^1.4.0"
   },
   "devDependencies": {
-    "@vitejs/plugin-vue": "^4.2.3",
-    "vite": "^4.4.5",
-    "postcss-px-to-viewport": "^1.1.1",
-    "sass": "^1.64.1"
+    "vite": "^4.4.5"
   }
 } 

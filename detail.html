@@ -160,12 +160,11 @@
           const dateDisplay = formatDate(date);
           document.getElementById('date-display').textContent = `${dateDisplay}数据`;
 
-          const baseUrl = window.location.pathname.includes('/Live-data/') ? '/Live-data/' : '/';
           let data;
           if (date === 'today' || date === 'yesterday' || date === 'week') {
             // 从统计数据中获取
             console.log('从统计数据中获取...');
-            const response = await fetch(`${baseUrl}data/stats.json`);
+            const response = await fetch('data/stats.json');
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -175,7 +174,7 @@
           } else {
             // 从原始数据中获取特定日期的数据
             console.log('从原始数据中获取特定日期...');
-            const response = await fetch(`${baseUrl}data/raw.json`);
+            const response = await fetch('data/raw.json');
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
@@ -245,7 +244,7 @@
           `;
 
           // 更新最后更新时间
-          const statsResponse = await fetch(`${baseUrl}data/stats.json`);
+          const statsResponse = await fetch('data/stats.json');
           if (!statsResponse.ok) {
             throw new Error(`HTTP error! status: ${statsResponse.status}`);
           }
