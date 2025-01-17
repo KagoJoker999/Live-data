@@ -52,6 +52,10 @@ async function getAllRecords(token) {
     const response = await withRetry(() => api.get(`/bitable/v1/apps/${BASE_ID}/tables/${TABLE_ID}/records`, {
       headers: {
         'Authorization': `Bearer ${token}`
+      },
+      params: {
+        page_size: 100,
+        sort: JSON.stringify([{ field: '日期', order: 'desc' }])
       }
     }));
     return response.data.data.items;
@@ -114,6 +118,8 @@ async function main() {
         '直播间成交件数': 0,
         '直播间成交人数': 0
       },
+      logs: [],  // 存储日志
+      reports: [], // 存储复盘AI报告
       lastUpdate: new Date().toISOString()
     };
 
@@ -125,6 +131,20 @@ async function main() {
         groupedData[date] = [];
       }
       groupedData[date].push(record.fields);
+
+      // 收集日志和报告
+      if (record.fields['日志']) {
+        processedData.logs.push({
+          date: date,
+          content: record.fields['日志']
+        });
+      }
+      if (record.fields['复盘AI报告']) {
+        processedData.reports.push({
+          date: date,
+          content: record.fields['复盘AI报告']
+        });
+      }
     });
 
     // 处理每天的数据
@@ -170,6 +190,10 @@ async function main() {
         }
       }
     });
+
+    // 按日期排序日志和报告
+    processedData.logs.sort((a, b) => b.date.localeCompare(a.date));
+    processedData.reports.sort((a, b) => b.date.localeCompare(a.date));
 
     // 保存数据
     const dataPath = path.join(dataDir, 'live-data.json');
