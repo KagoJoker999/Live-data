@@ -49,6 +49,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 15px;
+      margin-bottom: 20px;
     }
     .data-item {
       background: #f8f9fa;
@@ -70,6 +71,23 @@
       color: #666;
       font-size: 0.9em;
     }
+    .text-content {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-size: 0.95em;
+      line-height: 1.6;
+      margin-top: 10px;
+    }
+    .report-content {
+      background: #e6f7ff;
+    }
+    .section-title {
+      font-size: 1.1em;
+      color: #1890ff;
+      margin: 15px 0 10px;
+    }
   </style>
 </head>
 <body>
@@ -83,6 +101,10 @@
     <div id="current-data">
       <div class="date-info"></div>
       <div class="data-grid"></div>
+      <div class="section-title">直播日志</div>
+      <div class="text-content" id="current-log"></div>
+      <div class="section-title">复盘AI报告</div>
+      <div class="text-content report-content" id="current-report"></div>
     </div>
   </div>
 
@@ -91,6 +113,10 @@
     <div id="previous-data">
       <div class="date-info"></div>
       <div class="data-grid"></div>
+      <div class="section-title">直播日志</div>
+      <div class="text-content" id="previous-log"></div>
+      <div class="section-title">复盘AI报告</div>
+      <div class="text-content report-content" id="previous-report"></div>
     </div>
   </div>
 
@@ -114,24 +140,32 @@
       if (data.current) {
         const currentDateInfo = document.querySelector('#current-data .date-info');
         const currentGrid = document.querySelector('#current-data .data-grid');
+        const currentLog = document.getElementById('current-log');
+        const currentReport = document.getElementById('current-report');
         
         currentDateInfo.textContent = `开播日期：${data.current['开播日期'] || data.current['日期'] || '未知'}`;
         currentGrid.innerHTML = Object.entries(data.current)
-          .filter(([key]) => key !== '开播日期' && key !== '日期')
+          .filter(([key]) => key !== '开播日期' && key !== '日期' && key !== '日志' && key !== '复盘AI报告')
           .map(([key, value]) => createDataItem(key, value))
           .join('');
+        currentLog.textContent = data.current['日志'] || '暂无日志';
+        currentReport.textContent = data.current['复盘AI报告'] || '暂无复盘报告';
       }
 
       // 更新上场数据
       if (data.previous) {
         const previousDateInfo = document.querySelector('#previous-data .date-info');
         const previousGrid = document.querySelector('#previous-data .data-grid');
+        const previousLog = document.getElementById('previous-log');
+        const previousReport = document.getElementById('previous-report');
         
         previousDateInfo.textContent = `开播日期：${data.previous['开播日期'] || data.previous['日期'] || '未知'}`;
         previousGrid.innerHTML = Object.entries(data.previous)
-          .filter(([key]) => key !== '开播日期' && key !== '日期')
+          .filter(([key]) => key !== '开播日期' && key !== '日期' && key !== '日志' && key !== '复盘AI报告')
           .map(([key, value]) => createDataItem(key, value))
           .join('');
+        previousLog.textContent = data.previous['日志'] || '暂无日志';
+        previousReport.textContent = data.previous['复盘AI报告'] || '暂无复盘报告';
       }
     }
 

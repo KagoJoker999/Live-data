@@ -66,6 +66,7 @@
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
+      margin-bottom: 15px;
     }
     .history-card .data-item {
       background: #f8f9fa;
@@ -81,6 +82,24 @@
       font-size: 1.1em;
       font-weight: bold;
       color: #1890ff;
+    }
+    .section-title {
+      font-size: 1em;
+      color: #1890ff;
+      margin: 15px 0 10px;
+    }
+    .text-content {
+      background: #f8f9fa;
+      padding: 12px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+      font-size: 0.9em;
+      line-height: 1.5;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+    .report-content {
+      background: #e6f7ff;
     }
   </style>
 </head>
@@ -117,10 +136,14 @@
           <div class="date">${data['开播日期'] || data['日期']}</div>
           <div class="data-grid">
             ${Object.entries(data)
-              .filter(([key]) => key !== '开播日期' && key !== '日期')
+              .filter(([key]) => key !== '开播日期' && key !== '日期' && key !== '日志' && key !== '复盘AI报告')
               .map(([key, value]) => createDataItem(key, value))
               .join('')}
           </div>
+          <div class="section-title">直播日志</div>
+          <div class="text-content">${data['日志'] || '暂无日志'}</div>
+          <div class="section-title">复盘AI报告</div>
+          <div class="text-content report-content">${data['复盘AI报告'] || '暂无复盘报告'}</div>
         </div>
       `;
     }
