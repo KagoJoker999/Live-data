@@ -33,74 +33,54 @@
     .nav a.active {
       color: #1890ff;
     }
-    .card {
+    .header {
+      margin-bottom: 20px;
+    }
+    .header h1 {
+      font-size: 1.5em;
+      color: #1890ff;
+    }
+    .history-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+    .history-card {
       background: #fff;
       padding: 20px;
       border-radius: 8px;
-      margin-bottom: 20px;
       box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+      cursor: pointer;
     }
-    .card h2 {
-      margin-bottom: 15px;
+    .history-card:hover {
+      transform: translateY(-5px);
+    }
+    .history-card .date {
+      font-size: 1.1em;
+      font-weight: bold;
       color: #1890ff;
-      font-size: 1.2em;
+      margin-bottom: 15px;
     }
-    .filters {
+    .history-card .data-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 15px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
     }
-    .filter-item {
-      display: flex;
-      flex-direction: column;
+    .history-card .data-item {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
     }
-    .filter-item label {
+    .history-card .data-item .label {
       font-size: 0.9em;
       color: #666;
       margin-bottom: 5px;
     }
-    .filter-item input,
-    .filter-item select {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 0.95em;
-    }
-    .filter-item button {
-      background: #1890ff;
-      color: white;
-      border: none;
-      padding: 8px 16px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 0.95em;
-    }
-    .filter-item button:hover {
-      background: #40a9ff;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-    }
-    th {
-      background: #f8f9fa;
+    .history-card .data-item .value {
+      font-size: 1.1em;
       font-weight: bold;
-      color: #666;
-    }
-    tr:hover {
-      background: #f8f9fa;
-    }
-    .empty-message {
-      text-align: center;
-      padding: 20px;
-      color: #666;
+      color: #1890ff;
     }
   </style>
 </head>
@@ -110,150 +90,65 @@
     <a href="/Live-data/history.html" class="active">历史数据</a>
   </div>
 
-  <div class="card">
-    <h2>历史数据查询</h2>
-    <div class="filters">
-      <div class="filter-item">
-        <label>开始日期</label>
-        <input type="date" id="start-date">
-      </div>
-      <div class="filter-item">
-        <label>结束日期</label>
-        <input type="date" id="end-date">
-      </div>
-      <div class="filter-item">
-        <label>数据类型</label>
-        <select id="data-type">
-          <option value="all">全部数据</option>
-          <option value="viewers">观看数据</option>
-          <option value="engagement">互动数据</option>
-          <option value="sales">销售数据</option>
-        </select>
-      </div>
-      <div class="filter-item">
-        <label>&nbsp;</label>
-        <button onclick="queryData()">查询</button>
-      </div>
-    </div>
-
-    <div id="result">
-      <table>
-        <thead>
-          <tr>
-            <th>日期</th>
-            <th>时间</th>
-            <th>观看人数</th>
-            <th>观看人次</th>
-            <th>最高在线</th>
-            <th>平均在线</th>
-            <th>评论数</th>
-            <th>新增粉丝</th>
-            <th>成交金额</th>
-            <th>成交件数</th>
-            <th>成交人数</th>
-            <th>日志</th>
-            <th>复盘AI报告</th>
-          </tr>
-        </thead>
-        <tbody id="data-table">
-          <!-- 数据将通过JavaScript动态填充 -->
-        </tbody>
-      </table>
-    </div>
+  <div class="header">
+    <h1>历史直播数据</h1>
   </div>
 
+  <div class="history-grid" id="history-grid"></div>
+
   <script>
-    // 设置默认日期范围（最近7天）
-    function setDefaultDates() {
-      const end = new Date();
-      const start = new Date();
-      start.setDate(start.getDate() - 6);
-      
-      document.getElementById('start-date').value = formatDate(start);
-      document.getElementById('end-date').value = formatDate(end);
-    }
-
-    function formatDate(date) {
-      return date.toISOString().split('T')[0];
-    }
-
     function formatNumber(num) {
+      if (num === undefined || num === null) return '0';
       return new Intl.NumberFormat('zh-CN').format(num);
     }
 
-    async function queryData() {
+    function createDataItem(label, value) {
+      return `
+        <div class="data-item">
+          <div class="label">${label}</div>
+          <div class="value">${formatNumber(value)}</div>
+        </div>
+      `;
+    }
+
+    function createHistoryCard(data) {
+      return `
+        <div class="history-card" onclick="showDetail('${data['开播日期'] || data['日期']}')">
+          <div class="date">${data['开播日期'] || data['日期']}</div>
+          <div class="data-grid">
+            ${Object.entries(data)
+              .filter(([key]) => key !== '开播日期' && key !== '日期')
+              .map(([key, value]) => createDataItem(key, value))
+              .join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function showDetail(date) {
+      window.location.href = `/Live-data/detail.html?date=${encodeURIComponent(date)}`;
+    }
+
+    async function fetchData() {
       try {
         const response = await fetch('/Live-data/data/live-data.json');
         if (!response.ok) throw new Error('Failed to fetch data');
         const data = await response.json();
         
-        const startDate = document.getElementById('start-date').value;
-        const endDate = document.getElementById('end-date').value;
-        const dataType = document.getElementById('data-type').value;
-
-        // 过滤并显示数据
-        displayFilteredData(data, startDate, endDate, dataType);
+        const historyGrid = document.getElementById('history-grid');
+        if (data.history && Array.isArray(data.history)) {
+          historyGrid.innerHTML = data.history.map(record => createHistoryCard(record)).join('');
+        }
       } catch (error) {
         console.error('Error fetching data:', error);
-        document.getElementById('data-table').innerHTML = `
-          <tr>
-            <td colspan="10" class="empty-message">获取数据失败，请稍后重试</td>
-          </tr>
-        `;
       }
     }
 
-    function displayFilteredData(data, startDate, endDate, dataType) {
-      const tableBody = document.getElementById('data-table');
-      const rows = [];
+    // 初始加载
+    fetchData();
 
-      // 使用dailyData显示每天的所有记录
-      if (data.dailyData) {
-        Object.entries(data.dailyData)
-          .filter(([date]) => date >= startDate && date <= endDate)
-          .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-          .forEach(([date, records]) => {
-            // 对于每一天的每条记录都显示出来
-            records.forEach(record => {
-              const row = `
-                <tr>
-                  <td>${date}</td>
-                  <td>${record['时间'] || ''}</td>
-                  <td>${formatNumber(record['直播间观看人数'])}</td>
-                  <td>${formatNumber(record['直播间观看人次'])}</td>
-                  <td>${formatNumber(record['最高在线人数'])}</td>
-                  <td>${formatNumber(record['平均在线人数'])}</td>
-                  <td>${formatNumber(record['评论次数'])}</td>
-                  <td>${formatNumber(record['新增粉丝数'])}</td>
-                  <td>${formatNumber(record['直播间成交金额'])}</td>
-                  <td>${formatNumber(record['直播间成交件数'])}</td>
-                  <td>${formatNumber(record['直播间成交人数'])}</td>
-                  <td>${record['日志'] || ''}</td>
-                  <td>${record['复盘AI报告'] || ''}</td>
-                </tr>
-              `;
-              rows.push(row);
-            });
-          });
-      }
-
-      if (rows.length === 0) {
-        tableBody.innerHTML = `
-          <tr>
-            <td colspan="13" class="empty-message">没有找到符合条件的数据</td>
-          </tr>
-        `;
-      } else {
-        tableBody.innerHTML = rows.join('');
-      }
-    }
-
-    // 页面加载时设置默认日期并查询数据
-    setDefaultDates();
-    queryData();
-
-    // 每分钟刷新一次数据
-    setInterval(queryData, 60000);
+    // 每分钟刷新一次
+    setInterval(fetchData, 60000);
   </script>
 </body>
 </html> 

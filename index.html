@@ -45,66 +45,30 @@
       color: #1890ff;
       font-size: 1.2em;
     }
-    .data-row {
+    .data-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 15px;
-      margin-bottom: 10px;
     }
     .data-item {
       background: #f8f9fa;
-      padding: 10px;
+      padding: 15px;
       border-radius: 4px;
     }
     .data-item .label {
       font-size: 0.9em;
       color: #666;
+      margin-bottom: 5px;
     }
     .data-item .value {
       font-size: 1.2em;
       font-weight: bold;
       color: #1890ff;
     }
-    .log-item, .report-item {
-      background: #f8f9fa;
-      padding: 15px;
-      border-radius: 4px;
-      margin-bottom: 10px;
-    }
-    .log-item .date, .report-item .date {
+    .date-info {
+      margin-bottom: 15px;
+      color: #666;
       font-size: 0.9em;
-      color: #666;
-      margin-bottom: 5px;
-    }
-    .log-item .content, .report-item .content {
-      white-space: pre-wrap;
-      font-size: 0.95em;
-    }
-    .report-item {
-      background: #e6f7ff;
-    }
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 10px;
-      background: white;
-    }
-    .data-table th,
-    .data-table td {
-      padding: 12px;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-    }
-    .data-table th {
-      background: #f8f9fa;
-      font-weight: bold;
-      color: #666;
-    }
-    .data-table tr:hover {
-      background: #f8f9fa;
-    }
-    .data-table td {
-      font-size: 0.95em;
     }
   </style>
 </head>
@@ -116,89 +80,23 @@
 
   <div class="card">
     <h2>本场直播数据</h2>
-    <div class="data-row" id="current-data"></div>
+    <div id="current-data">
+      <div class="date-info"></div>
+      <div class="data-grid"></div>
+    </div>
   </div>
 
   <div class="card">
     <h2>上场直播数据</h2>
-    <div class="data-row" id="previous-data"></div>
-  </div>
-
-  <div class="card">
-    <h2>今日数据</h2>
-    <div id="today-data">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>时间</th>
-            <th>观看人数</th>
-            <th>观看人次</th>
-            <th>最高在线</th>
-            <th>平均在线</th>
-            <th>评论数</th>
-            <th>新增粉丝</th>
-            <th>成交金额</th>
-            <th>成交件数</th>
-            <th>成交人数</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <div id="previous-data">
+      <div class="date-info"></div>
+      <div class="data-grid"></div>
     </div>
-  </div>
-
-  <div class="card">
-    <h2>昨日数据</h2>
-    <div id="yesterday-data">
-      <table class="data-table">
-        <thead>
-          <tr>
-            <th>时间</th>
-            <th>观看人数</th>
-            <th>观看人次</th>
-            <th>最高在线</th>
-            <th>平均在线</th>
-            <th>评论数</th>
-            <th>新增粉丝</th>
-            <th>成交金额</th>
-            <th>成交件数</th>
-            <th>成交人数</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <h2>本周数据</h2>
-    <div class="data-row" id="week-data"></div>
-  </div>
-
-  <div class="card">
-    <h2>直播日志</h2>
-    <div id="logs"></div>
-  </div>
-
-  <div class="card">
-    <h2>复盘AI报告</h2>
-    <div id="reports"></div>
   </div>
 
   <script>
-    const dataKeys = [
-      '直播间观看人数',
-      '直播间观看人次',
-      '最高在线人数',
-      '平均在线人数',
-      '评论次数',
-      '新增粉丝数',
-      '直播间成交金额',
-      '直播间成交件数',
-      '直播间成交人数'
-    ];
-
     function formatNumber(num) {
+      if (num === undefined || num === null) return '0';
       return new Intl.NumberFormat('zh-CN').format(num);
     }
 
@@ -206,88 +104,34 @@
       return `
         <div class="data-item">
           <div class="label">${label}</div>
-          <div class="value">${formatNumber(value || 0)}</div>
+          <div class="value">${formatNumber(value)}</div>
         </div>
       `;
     }
 
     function updateData(data) {
-      // 更新数据卡片
-      ['current', 'previous'].forEach(section => {
-        const container = document.getElementById(`${section}-data`);
-        if (container && data[section]) {
-          container.innerHTML = dataKeys.map(key => 
-            createDataItem(key, data[section][key])
-          ).join('');
-        }
-      });
-
-      // 更新今日数据表格
-      const todayTable = document.querySelector('#today-data table tbody');
-      if (todayTable && Array.isArray(data.today)) {
-        todayTable.innerHTML = data.today.map(record => `
-          <tr>
-            <td>${record['时间'] || ''}</td>
-            <td>${formatNumber(record['直播间观看人数'])}</td>
-            <td>${formatNumber(record['直播间观看人次'])}</td>
-            <td>${formatNumber(record['最高在线人数'])}</td>
-            <td>${formatNumber(record['平均在线人数'])}</td>
-            <td>${formatNumber(record['评论次数'])}</td>
-            <td>${formatNumber(record['新增粉丝数'])}</td>
-            <td>${formatNumber(record['直播间成交金额'])}</td>
-            <td>${formatNumber(record['直播间成交件数'])}</td>
-            <td>${formatNumber(record['直播间成交人数'])}</td>
-          </tr>
-        `).join('');
+      // 更新本场数据
+      if (data.current) {
+        const currentDateInfo = document.querySelector('#current-data .date-info');
+        const currentGrid = document.querySelector('#current-data .data-grid');
+        
+        currentDateInfo.textContent = `开播日期：${data.current['开播日期'] || data.current['日期'] || '未知'}`;
+        currentGrid.innerHTML = Object.entries(data.current)
+          .filter(([key]) => key !== '开播日期' && key !== '日期')
+          .map(([key, value]) => createDataItem(key, value))
+          .join('');
       }
 
-      // 更新昨日数据表格
-      const yesterdayTable = document.querySelector('#yesterday-data table tbody');
-      if (yesterdayTable && Array.isArray(data.yesterday)) {
-        yesterdayTable.innerHTML = data.yesterday.map(record => `
-          <tr>
-            <td>${record['时间'] || ''}</td>
-            <td>${formatNumber(record['直播间观看人数'])}</td>
-            <td>${formatNumber(record['直播间观看人次'])}</td>
-            <td>${formatNumber(record['最高在线人数'])}</td>
-            <td>${formatNumber(record['平均在线人数'])}</td>
-            <td>${formatNumber(record['评论次数'])}</td>
-            <td>${formatNumber(record['新增粉丝数'])}</td>
-            <td>${formatNumber(record['直播间成交金额'])}</td>
-            <td>${formatNumber(record['直播间成交件数'])}</td>
-            <td>${formatNumber(record['直播间成交人数'])}</td>
-          </tr>
-        `).join('');
-      }
-
-      // 更新周数据
-      const weekContainer = document.getElementById('week-data');
-      if (weekContainer && data.week) {
-        weekContainer.innerHTML = dataKeys.map(key => 
-          createDataItem(key, data.week[key])
-        ).join('');
-      }
-
-      // 更新日志
-      const logsContainer = document.getElementById('logs');
-      if (logsContainer && data.logs) {
-        logsContainer.innerHTML = data.logs.map(log => `
-          <div class="log-item">
-            <div class="date">${log.date}</div>
-            <div class="content">${log.content}</div>
-          </div>
-        `).join('');
-      }
-
-      // 更新复盘报告
-      const reportsContainer = document.getElementById('reports');
-      if (reportsContainer && data.reports) {
-        reportsContainer.innerHTML = data.reports.map(report => `
-          <div class="report-item">
-            <div class="date">${report.date}</div>
-            <div class="content">${report.content}</div>
-          </div>
-        `).join('');
+      // 更新上场数据
+      if (data.previous) {
+        const previousDateInfo = document.querySelector('#previous-data .date-info');
+        const previousGrid = document.querySelector('#previous-data .data-grid');
+        
+        previousDateInfo.textContent = `开播日期：${data.previous['开播日期'] || data.previous['日期'] || '未知'}`;
+        previousGrid.innerHTML = Object.entries(data.previous)
+          .filter(([key]) => key !== '开播日期' && key !== '日期')
+          .map(([key, value]) => createDataItem(key, value))
+          .join('');
       }
     }
 
