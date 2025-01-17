@@ -49,13 +49,13 @@ async function getTenantAccessToken() {
 // 获取所有记录
 async function getAllRecords(token) {
   try {
+    // 首先尝试获取所有记录，不带排序
     const response = await withRetry(() => api.get(`/bitable/v1/apps/${BASE_ID}/tables/${TABLE_ID}/records`, {
       headers: {
         'Authorization': `Bearer ${token}`
       },
       params: {
-        page_size: 100,
-        sort: JSON.stringify([{ field: '日期', order: 'desc' }])
+        page_size: 100
       }
     }));
 
@@ -73,7 +73,15 @@ async function getAllRecords(token) {
       throw new Error('API响应中的items不是数组');
     }
 
-    return response.data.data.items;
+    // 获取所有记录后在本地进行排序
+    const items = response.data.data.items;
+    items.sort((a, b) => {
+      const dateA = a.fields['日期'] || '';
+      const dateB = b.fields['日期'] || '';
+      return dateB.localeCompare(dateA); // 按日期降序排序
+    });
+
+    return items;
   } catch (error) {
     if (error.response) {
       // 请求已发出，但服务器响应状态码不在 2xx 范围内
