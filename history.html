@@ -141,6 +141,7 @@
         <thead>
           <tr>
             <th>日期</th>
+            <th>时间</th>
             <th>观看人数</th>
             <th>观看人次</th>
             <th>最高在线</th>
@@ -150,6 +151,8 @@
             <th>成交金额</th>
             <th>成交件数</th>
             <th>成交人数</th>
+            <th>日志</th>
+            <th>复盘AI报告</th>
           </tr>
         </thead>
         <tbody id="data-table">
@@ -204,53 +207,40 @@
       const tableBody = document.getElementById('data-table');
       const rows = [];
 
-      // 获取所有日期的数据
-      const dailyData = {};
-      if (data.logs) {
-        data.logs.forEach(log => {
-          if (!dailyData[log.date]) {
-            dailyData[log.date] = {
-              date: log.date,
-              '直播间观看人数': 0,
-              '直播间观看人次': 0,
-              '最高在线人数': 0,
-              '平均在线人数': 0,
-              '评论次数': 0,
-              '新增粉丝数': 0,
-              '直播间成交金额': 0,
-              '直播间成交件数': 0,
-              '直播间成交人数': 0
-            };
-          }
-        });
+      // 使用dailyData显示每天的所有记录
+      if (data.dailyData) {
+        Object.entries(data.dailyData)
+          .filter(([date]) => date >= startDate && date <= endDate)
+          .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+          .forEach(([date, records]) => {
+            // 对于每一天的每条记录都显示出来
+            records.forEach(record => {
+              const row = `
+                <tr>
+                  <td>${date}</td>
+                  <td>${record['时间'] || ''}</td>
+                  <td>${formatNumber(record['直播间观看人数'])}</td>
+                  <td>${formatNumber(record['直播间观看人次'])}</td>
+                  <td>${formatNumber(record['最高在线人数'])}</td>
+                  <td>${formatNumber(record['平均在线人数'])}</td>
+                  <td>${formatNumber(record['评论次数'])}</td>
+                  <td>${formatNumber(record['新增粉丝数'])}</td>
+                  <td>${formatNumber(record['直播间成交金额'])}</td>
+                  <td>${formatNumber(record['直播间成交件数'])}</td>
+                  <td>${formatNumber(record['直播间成交人数'])}</td>
+                  <td>${record['日志'] || ''}</td>
+                  <td>${record['复盘AI报告'] || ''}</td>
+                </tr>
+              `;
+              rows.push(row);
+            });
+          });
       }
-
-      // 过滤日期范围内的数据
-      Object.entries(dailyData)
-        .filter(([date]) => date >= startDate && date <= endDate)
-        .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-        .forEach(([date, stats]) => {
-          const row = `
-            <tr>
-              <td>${date}</td>
-              <td>${formatNumber(stats['直播间观看人数'])}</td>
-              <td>${formatNumber(stats['直播间观看人次'])}</td>
-              <td>${formatNumber(stats['最高在线人数'])}</td>
-              <td>${formatNumber(stats['平均在线人数'])}</td>
-              <td>${formatNumber(stats['评论次数'])}</td>
-              <td>${formatNumber(stats['新增粉丝数'])}</td>
-              <td>${formatNumber(stats['直播间成交金额'])}</td>
-              <td>${formatNumber(stats['直播间成交件数'])}</td>
-              <td>${formatNumber(stats['直播间成交人数'])}</td>
-            </tr>
-          `;
-          rows.push(row);
-        });
 
       if (rows.length === 0) {
         tableBody.innerHTML = `
           <tr>
-            <td colspan="10" class="empty-message">没有找到符合条件的数据</td>
+            <td colspan="13" class="empty-message">没有找到符合条件的数据</td>
           </tr>
         `;
       } else {

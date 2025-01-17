@@ -31,11 +31,17 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Create Directories
+      - name: Create Data Directory
         run: |
           mkdir -p public/data
-          echo "Created public/data directory"
           ls -la public/data
+
+      - name: Check Environment Variables
+        run: |
+          if [ -z "${{ secrets.VITE_APP_ID }}" ] || [ -z "${{ secrets.VITE_APP_SECRET }}" ] || [ -z "${{ secrets.VITE_BASE_ID }}" ] || [ -z "${{ secrets.VITE_TABLE_ID }}" ]; then
+            echo "Error: Missing required environment variables"
+            exit 1
+          fi
 
       - name: Fetch Data from Feishu
         env:
@@ -44,16 +50,28 @@ jobs:
           VITE_BASE_ID: ${{ secrets.VITE_BASE_ID }}
           VITE_TABLE_ID: ${{ secrets.VITE_TABLE_ID }}
         run: |
-          if [ -z "$VITE_APP_ID" ] || [ -z "$VITE_APP_SECRET" ] || [ -z "$VITE_BASE_ID" ] || [ -z "$VITE_TABLE_ID" ]; then
-            echo "Error: Required environment variables are not set"
-            exit 1
-          fi
           node scripts/fetch-data.js
-          echo "Data files in public/data:"
           ls -la public/data
 
       - name: Build
         run: npm run build
+
+      - name: Prepare Deployment Files
+        run: |
+          # 确保dist目录存在
+          mkdir -p dist
+          
+          # 复制HTML文件到dist目录
+          cp index.html history.html dist/
+          
+          # 复制数据文件到dist目录
+          cp -r public/data dist/
+          
+          # 显示dist目录内容
+          echo "dist directory contents:"
+          ls -la dist
+          echo "dist/data directory contents:"
+          ls -la dist/data
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

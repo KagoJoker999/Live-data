@@ -148,11 +148,11 @@ async function main() {
     // 处理数据
     const dates = getLast7Days();
     const processedData = {
-      current: {},
-      previous: {},
-      today: {},
-      yesterday: {},
-      week: {
+      current: null,
+      previous: null,
+      today: [],    // 改为数组，存储今天的所有记录
+      yesterday: [], // 改为数组，存储昨天的所有记录
+      week: {       // 保持汇总统计
         '直播间观看人数': 0,
         '直播间观看人次': 0,
         '最高在线人数': 0,
@@ -163,8 +163,9 @@ async function main() {
         '直播间成交件数': 0,
         '直播间成交人数': 0
       },
-      logs: [],  // 存储日志
-      reports: [], // 存储复盘AI报告
+      dailyData: {}, // 新增：按日期存储所有原始数据
+      logs: [],
+      reports: [],
       lastUpdate: new Date().toISOString()
     };
 
@@ -172,6 +173,8 @@ async function main() {
     const groupedData = {};
     records.forEach(record => {
       const date = record.fields['日期'];
+      if (!date) return; // 跳过没有日期的记录
+
       if (!groupedData[date]) {
         groupedData[date] = [];
       }
@@ -195,46 +198,47 @@ async function main() {
     // 处理每天的数据
     dates.forEach((date, index) => {
       const dayData = groupedData[date] || [];
-      const stats = {
-        '直播间观看人数': 0,
-        '直播间观看人次': 0,
-        '最高在线人数': 0,
-        '平均在线人数': 0,
-        '评论次数': 0,
-        '新增粉丝数': 0,
-        '直播间成交金额': 0,
-        '直播间成交件数': 0,
-        '直播间成交人数': 0
-      };
-
-      // 合计当天数据
-      dayData.forEach(record => {
-        Object.keys(stats).forEach(key => {
-          stats[key] += Number(record[key] || 0);
-        });
-      });
-
-      // 更新周数据
-      Object.keys(stats).forEach(key => {
-        processedData.week[key] += stats[key];
-      });
-
-      // 更新当天和昨天数据
-      if (index === 0) {
-        processedData.today = stats;
-      } else if (index === 1) {
-        processedData.yesterday = stats;
-      }
-
-      // 更新本场和上一场数据
+      
+      // 保存原始数据
+      processedData.dailyData[date] = dayData;
+      
+      // 如果这一天有数据
       if (dayData.length > 0) {
-        if (!processedData.current.date) {
+        // 更新今日和昨日数据（保留所有记录）
+        if (index === 0) {
+          processedData.today = dayData;
+        } else if (index === 1) {
+          processedData.yesterday = dayData;
+        }
+
+        // 更新本场和上一场数据（使用最新记录）
+        if (!processedData.current) {
           processedData.current = { ...dayData[0], date };
-        } else if (!processedData.previous.date) {
+        } else if (!processedData.previous) {
           processedData.previous = { ...dayData[0], date };
         }
+
+        // 计算周统计数据
+        dayData.forEach(record => {
+          Object.keys(processedData.week).forEach(key => {
+            const value = Number(record[key] || 0);
+            if (key === '最高在线人数') {
+              processedData.week[key] = Math.max(processedData.week[key], value);
+            } else if (key === '平均在线人数') {
+              processedData.week[key] += value;
+            } else {
+              processedData.week[key] += value;
+            }
+          });
+        });
       }
     });
+
+    // 计算周平均在线人数
+    const daysWithData = dates.filter(date => groupedData[date]?.length > 0).length;
+    if (daysWithData > 0) {
+      processedData.week['平均在线人数'] = Math.round(processedData.week['平均在线人数'] / daysWithData);
+    }
 
     // 按日期排序日志和报告
     processedData.logs.sort((a, b) => b.date.localeCompare(a.date));
@@ -244,6 +248,9 @@ async function main() {
     const dataPath = path.join(dataDir, 'live-data.json');
     fs.writeFileSync(dataPath, JSON.stringify(processedData, null, 2));
     console.log('数据已保存到:', dataPath);
+    
+    // 打印处理后的数据以便调试
+    console.log('处理后的数据:', JSON.stringify(processedData, null, 2));
 
   } catch (error) {
     console.error('处理数据失败:', error);

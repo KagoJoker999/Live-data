@@ -83,6 +83,29 @@
     .report-item {
       background: #e6f7ff;
     }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: white;
+    }
+    .data-table th,
+    .data-table td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    .data-table th {
+      background: #f8f9fa;
+      font-weight: bold;
+      color: #666;
+    }
+    .data-table tr:hover {
+      background: #f8f9fa;
+    }
+    .data-table td {
+      font-size: 0.95em;
+    }
   </style>
 </head>
 <body>
@@ -103,12 +126,48 @@
 
   <div class="card">
     <h2>今日数据</h2>
-    <div class="data-row" id="today-data"></div>
+    <div id="today-data">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>观看人数</th>
+            <th>观看人次</th>
+            <th>最高在线</th>
+            <th>平均在线</th>
+            <th>评论数</th>
+            <th>新增粉丝</th>
+            <th>成交金额</th>
+            <th>成交件数</th>
+            <th>成交人数</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card">
     <h2>昨日数据</h2>
-    <div class="data-row" id="yesterday-data"></div>
+    <div id="yesterday-data">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>时间</th>
+            <th>观看人数</th>
+            <th>观看人次</th>
+            <th>最高在线</th>
+            <th>平均在线</th>
+            <th>评论数</th>
+            <th>新增粉丝</th>
+            <th>成交金额</th>
+            <th>成交件数</th>
+            <th>成交人数</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
 
   <div class="card">
@@ -154,7 +213,7 @@
 
     function updateData(data) {
       // 更新数据卡片
-      ['current', 'previous', 'today', 'yesterday', 'week'].forEach(section => {
+      ['current', 'previous'].forEach(section => {
         const container = document.getElementById(`${section}-data`);
         if (container && data[section]) {
           container.innerHTML = dataKeys.map(key => 
@@ -162,6 +221,52 @@
           ).join('');
         }
       });
+
+      // 更新今日数据表格
+      const todayTable = document.querySelector('#today-data table tbody');
+      if (todayTable && Array.isArray(data.today)) {
+        todayTable.innerHTML = data.today.map(record => `
+          <tr>
+            <td>${record['时间'] || ''}</td>
+            <td>${formatNumber(record['直播间观看人数'])}</td>
+            <td>${formatNumber(record['直播间观看人次'])}</td>
+            <td>${formatNumber(record['最高在线人数'])}</td>
+            <td>${formatNumber(record['平均在线人数'])}</td>
+            <td>${formatNumber(record['评论次数'])}</td>
+            <td>${formatNumber(record['新增粉丝数'])}</td>
+            <td>${formatNumber(record['直播间成交金额'])}</td>
+            <td>${formatNumber(record['直播间成交件数'])}</td>
+            <td>${formatNumber(record['直播间成交人数'])}</td>
+          </tr>
+        `).join('');
+      }
+
+      // 更新昨日数据表格
+      const yesterdayTable = document.querySelector('#yesterday-data table tbody');
+      if (yesterdayTable && Array.isArray(data.yesterday)) {
+        yesterdayTable.innerHTML = data.yesterday.map(record => `
+          <tr>
+            <td>${record['时间'] || ''}</td>
+            <td>${formatNumber(record['直播间观看人数'])}</td>
+            <td>${formatNumber(record['直播间观看人次'])}</td>
+            <td>${formatNumber(record['最高在线人数'])}</td>
+            <td>${formatNumber(record['平均在线人数'])}</td>
+            <td>${formatNumber(record['评论次数'])}</td>
+            <td>${formatNumber(record['新增粉丝数'])}</td>
+            <td>${formatNumber(record['直播间成交金额'])}</td>
+            <td>${formatNumber(record['直播间成交件数'])}</td>
+            <td>${formatNumber(record['直播间成交人数'])}</td>
+          </tr>
+        `).join('');
+      }
+
+      // 更新周数据
+      const weekContainer = document.getElementById('week-data');
+      if (weekContainer && data.week) {
+        weekContainer.innerHTML = dataKeys.map(key => 
+          createDataItem(key, data.week[key])
+        ).join('');
+      }
 
       // 更新日志
       const logsContainer = document.getElementById('logs');
