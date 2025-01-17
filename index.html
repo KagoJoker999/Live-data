@@ -170,8 +170,15 @@
     <script>
       async function refreshData() {
         try {
-          const response = await fetch('/Live-data/data/stats.json');
+          console.log('开始获取数据...');
+          // 使用相对路径
+          const response = await fetch('data/stats.json');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          console.log('成功获取数据');
           const data = await response.json();
+          console.log('数据内容:', data);
 
           // 更新今日数据
           document.getElementById('today-viewers').textContent = data.today.viewers.toLocaleString();
@@ -196,7 +203,13 @@
           document.getElementById('last-update').textContent = lastUpdate.toLocaleString();
         } catch (error) {
           console.error('刷新数据失败:', error);
-          alert('刷新数据失败，请稍后重试');
+          // 显示具体错误信息
+          const errorElements = document.querySelectorAll('.data-info span');
+          errorElements.forEach(el => {
+            el.textContent = '加载失败';
+            el.style.color = 'red';
+          });
+          document.getElementById('last-update').textContent = '加载失败';
         }
       }
 

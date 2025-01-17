@@ -194,12 +194,20 @@
       // 查询数据
       async function queryData() {
         try {
+          console.log('开始查询数据...');
           const startDate = document.getElementById('start-date').value;
           const endDate = document.getElementById('end-date').value;
           const dataType = document.getElementById('data-type').value;
 
-          const response = await fetch('/Live-data/data/raw.json');
+          console.log('查询参数:', { startDate, endDate, dataType });
+          
+          const response = await fetch('data/raw.json');
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          console.log('成功获取数据');
           const rawData = await response.json();
+          console.log('原始数据:', rawData);
           
           // 过滤日期范围内的数据
           const filteredData = rawData
@@ -209,9 +217,18 @@
             })
             .sort((a, b) => b.date.localeCompare(a.date)); // 按日期降序排序
 
+          console.log('过滤后的数据:', filteredData);
+
           // 更新表格
           const tbody = document.getElementById('data-body');
           tbody.innerHTML = '';
+          
+          if (filteredData.length === 0) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = '<td colspan="5" style="text-align: center;">暂无数据</td>';
+            tbody.appendChild(tr);
+            return;
+          }
           
           filteredData.forEach(item => {
             const tr = document.createElement('tr');
@@ -230,7 +247,8 @@
           });
         } catch (error) {
           console.error('查询数据失败:', error);
-          alert('查询数据失败，请稍后重试');
+          const tbody = document.getElementById('data-body');
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">加载失败</td></tr>';
         }
       }
 
