@@ -1,222 +1,221 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>直播数据</title>
-    <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-        line-height: 1.6;
-        padding: 20px;
-        max-width: 800px;
-        margin: 0 auto;
-        background-color: #f5f5f5;
-      }
-      .nav {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-bottom: 20px;
-        background-color: #fff;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      .nav a {
-        text-decoration: none;
-        color: #333;
-        padding: 8px 16px;
-        border-radius: 4px;
-        transition: background-color 0.3s;
-      }
-      .nav a.active {
-        background-color: #007aff;
-        color: #fff;
-      }
-      .nav a:hover {
-        background-color: #f0f0f0;
-      }
-      .nav a.active:hover {
-        background-color: #0056b3;
-      }
-      .header {
-        text-align: center;
-        padding: 20px 0;
-        background-color: #fff;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-      }
-      .content {
-        background-color: #fff;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      }
-      h1 {
-        color: #333;
-        margin-bottom: 10px;
-      }
-      .data-list {
-        list-style: none;
-      }
-      .data-item {
-        padding: 15px;
-        border-bottom: 1px solid #eee;
-        cursor: pointer;
-        transition: background-color 0.3s;
-      }
-      .data-item:hover {
-        background-color: #f8f9fa;
-      }
-      .data-item:last-child {
-        border-bottom: none;
-      }
-      .data-title {
-        font-weight: bold;
-        color: #333;
-        margin-bottom: 5px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .data-info {
-        color: #666;
-        font-size: 14px;
-        margin-bottom: 4px;
-      }
-      .refresh-time {
-        font-size: 12px;
-        color: #999;
-        text-align: center;
-        margin-top: 10px;
-      }
-      .button {
-        background-color: #007aff;
-        color: #fff;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: background-color 0.3s;
-      }
-      .button:hover {
-        background-color: #0056b3;
-      }
-      @media (max-width: 480px) {
-        body {
-          padding: 10px;
-        }
-        .nav {
-          padding: 10px;
-        }
-        .nav a {
-          padding: 6px 12px;
-          font-size: 14px;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <nav class="nav">
-      <a href="index.html" class="active">实时数据</a>
-      <a href="history.html">历史数据</a>
-    </nav>
-    <div class="header">
-      <h1>直播数据统计</h1>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>直播数据</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      line-height: 1.5;
+      padding: 16px;
+      max-width: 500px;
+      margin: 0 auto;
+      background-color: #f5f5f5;
+    }
+    .nav {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      background: #fff;
+      padding: 12px;
+      border-radius: 12px;
+    }
+    .nav a {
+      flex: 1;
+      text-align: center;
+      text-decoration: none;
+      color: #666;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.3s;
+    }
+    .nav a.active {
+      background: #007AFF;
+      color: #fff;
+    }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 12px;
+    }
+    .data-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #eee;
+    }
+    .data-row:last-child {
+      border-bottom: none;
+    }
+    .data-label {
+      color: #666;
+    }
+    .data-value {
+      color: #333;
+      font-weight: 500;
+    }
+    .update-time {
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav">
+    <a href="index.html" class="active">实时数据</a>
+    <a href="history.html">历史数据</a>
+  </nav>
+
+  <div class="card">
+    <div class="card-title">本场直播数据</div>
+    <div id="current-data">
+      <div class="data-row">
+        <span class="data-label">观看人数</span>
+        <span class="data-value" id="current-viewers">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">观看人次</span>
+        <span class="data-value" id="current-views">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">最高在线</span>
+        <span class="data-value" id="current-max-online">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">平均在线</span>
+        <span class="data-value" id="current-avg-online">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">评论次数</span>
+        <span class="data-value" id="current-comments">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">新增粉丝</span>
+        <span class="data-value" id="current-followers">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">成交金额</span>
+        <span class="data-value" id="current-sales">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">成交件数</span>
+        <span class="data-value" id="current-orders">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">成交人数</span>
+        <span class="data-value" id="current-customers">加载中...</span>
+      </div>
     </div>
-    <div class="content">
-      <ul class="data-list">
-        <li class="data-item" onclick="location.href='detail.html?date=today'">
-          <div class="data-title">
-            <span>今日直播数据</span>
-            <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
-          </div>
-          <div class="data-info">观看人数：<span id="today-viewers">加载中...</span></div>
-          <div class="data-info">成交金额：<span id="today-sales">加载中...</span></div>
-          <div class="data-info">成交人数：<span id="today-customers">加载中...</span></div>
-          <div class="data-info">新增粉丝：<span id="today-followers">加载中...</span></div>
-        </li>
-        <li class="data-item" onclick="location.href='detail.html?date=yesterday'">
-          <div class="data-title">
-            <span>昨日直播数据</span>
-            <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
-          </div>
-          <div class="data-info">观看人数：<span id="yesterday-viewers">加载中...</span></div>
-          <div class="data-info">成交金额：<span id="yesterday-sales">加载中...</span></div>
-          <div class="data-info">成交人数：<span id="yesterday-customers">加载中...</span></div>
-          <div class="data-info">新增粉丝：<span id="yesterday-followers">加载中...</span></div>
-        </li>
-        <li class="data-item" onclick="location.href='detail.html?date=week'">
-          <div class="data-title">
-            <span>本周数据统计</span>
-            <button class="button" onclick="event.stopPropagation(); refreshData()">刷新</button>
-          </div>
-          <div class="data-info">总观看人数：<span id="week-viewers">加载中...</span></div>
-          <div class="data-info">总成交金额：<span id="week-sales">加载中...</span></div>
-          <div class="data-info">总成交人数：<span id="week-customers">加载中...</span></div>
-          <div class="data-info">总新增粉丝：<span id="week-followers">加载中...</span></div>
-        </li>
-      </ul>
-      <div class="refresh-time">最后更新时间：<span id="last-update">-</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">上一场直播数据</div>
+    <div id="previous-data">
+      <div class="data-row">
+        <span class="data-label">观看人数</span>
+        <span class="data-value" id="previous-viewers">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">观看人次</span>
+        <span class="data-value" id="previous-views">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">最高在线</span>
+        <span class="data-value" id="previous-max-online">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">平均在线</span>
+        <span class="data-value" id="previous-avg-online">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">评论次数</span>
+        <span class="data-value" id="previous-comments">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">新增粉丝</span>
+        <span class="data-value" id="previous-followers">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">成交金额</span>
+        <span class="data-value" id="previous-sales">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">成交件数</span>
+        <span class="data-value" id="previous-orders">加载中...</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">成交人数</span>
+        <span class="data-value" id="previous-customers">加载中...</span>
+      </div>
     </div>
-    <script>
-      async function refreshData() {
-        try {
-          console.log('开始获取数据...');
-          const response = await fetch('data/stats.json');
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          console.log('成功获取数据');
-          const data = await response.json();
-          console.log('数据内容:', data);
+  </div>
 
-          // 更新今日数据
-          document.getElementById('today-viewers').textContent = data.today.viewers.toLocaleString();
-          document.getElementById('today-sales').textContent = '¥' + data.today.sales_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-          document.getElementById('today-customers').textContent = data.today.sales_users.toLocaleString();
-          document.getElementById('today-followers').textContent = data.today.new_followers.toLocaleString();
+  <div class="update-time">最后更新时间：<span id="update-time">加载中...</span></div>
 
-          // 更新昨日数据
-          document.getElementById('yesterday-viewers').textContent = data.yesterday.viewers.toLocaleString();
-          document.getElementById('yesterday-sales').textContent = '¥' + data.yesterday.sales_amount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-          document.getElementById('yesterday-customers').textContent = data.yesterday.sales_users.toLocaleString();
-          document.getElementById('yesterday-followers').textContent = data.yesterday.new_followers.toLocaleString();
-
-          // 更新本周数据
-          document.getElementById('week-viewers').textContent = data.week.viewers.toLocaleString();
-          document.getElementById('week-sales').textContent = '¥' + data.week.total_sales.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-          document.getElementById('week-customers').textContent = data.week.total_customers.toLocaleString();
-          document.getElementById('week-followers').textContent = data.week.total_followers.toLocaleString();
-
-          // 更新最后更新时间
-          const lastUpdate = new Date(data.lastUpdate);
-          document.getElementById('last-update').textContent = lastUpdate.toLocaleString();
-        } catch (error) {
-          console.error('刷新数据失败:', error);
-          // 显示具体错误信息
-          const errorElements = document.querySelectorAll('.data-info span');
-          errorElements.forEach(el => {
-            el.textContent = '加载失败';
-            el.style.color = 'red';
-          });
-          document.getElementById('last-update').textContent = '加载失败';
+  <script>
+    async function refreshData() {
+      try {
+        const response = await fetch('data/live-data.json');
+        if (!response.ok) {
+          throw new Error('获取数据失败');
         }
+        const data = await response.json();
+
+        // 更新本场数据
+        document.getElementById('current-viewers').textContent = data.current['直播间观看人数'] || '0';
+        document.getElementById('current-views').textContent = data.current['直播间观看人次'] || '0';
+        document.getElementById('current-max-online').textContent = data.current['最高在线人数'] || '0';
+        document.getElementById('current-avg-online').textContent = data.current['平均在线人数'] || '0';
+        document.getElementById('current-comments').textContent = data.current['评论次数'] || '0';
+        document.getElementById('current-followers').textContent = data.current['新增粉丝数'] || '0';
+        document.getElementById('current-sales').textContent = '¥' + (data.current['直播间成交金额'] || '0');
+        document.getElementById('current-orders').textContent = data.current['直播间成交件数'] || '0';
+        document.getElementById('current-customers').textContent = data.current['直播间成交人数'] || '0';
+
+        // 更新上一场数据
+        document.getElementById('previous-viewers').textContent = data.previous['直播间观看人数'] || '0';
+        document.getElementById('previous-views').textContent = data.previous['直播间观看人次'] || '0';
+        document.getElementById('previous-max-online').textContent = data.previous['最高在线人数'] || '0';
+        document.getElementById('previous-avg-online').textContent = data.previous['平均在线人数'] || '0';
+        document.getElementById('previous-comments').textContent = data.previous['评论次数'] || '0';
+        document.getElementById('previous-followers').textContent = data.previous['新增粉丝数'] || '0';
+        document.getElementById('previous-sales').textContent = '¥' + (data.previous['直播间成交金额'] || '0');
+        document.getElementById('previous-orders').textContent = data.previous['直播间成交件数'] || '0';
+        document.getElementById('previous-customers').textContent = data.previous['直播间成交人数'] || '0';
+
+        // 更新时间
+        const updateTime = new Date(data.lastUpdate);
+        document.getElementById('update-time').textContent = updateTime.toLocaleString();
+      } catch (error) {
+        console.error('刷新数据失败:', error);
+        const values = document.querySelectorAll('.data-value');
+        values.forEach(el => {
+          el.textContent = '加载失败';
+          el.style.color = '#ff3b30';
+        });
       }
+    }
 
-      // 页面加载时自动刷新数据
-      refreshData();
+    // 页面加载时刷新数据
+    refreshData();
 
-      // 每分钟自动刷新一次
-      setInterval(refreshData, 60000);
-    </script>
-  </body>
+    // 每分钟自动刷新
+    setInterval(refreshData, 60000);
+  </script>
+</body>
 </html> 
