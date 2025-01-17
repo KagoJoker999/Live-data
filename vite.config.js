@@ -5,5 +5,6 @@ export default defineConfig({
   base: '/Live-data/',
   build: {
     outDir: 'dist'
-  }
+  },
+  publicDir: 'public'
 })

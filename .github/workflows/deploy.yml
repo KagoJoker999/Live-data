@@ -37,9 +37,11 @@ jobs:
           npm install
           echo "安装完成"
           
-      - name: Create Data Directory
-        run: mkdir -p data
-        
+      - name: Create Directories
+        run: |
+          mkdir -p data
+          mkdir -p public
+          
       - name: Fetch Data from Feishu
         env:
           VITE_APP_ID: ${{ secrets.VITE_APP_ID }}
@@ -85,6 +87,15 @@ jobs:
           echo "stats.json 内容:"
           cat data/stats.json
 
+      - name: Copy Data Files to Public Directory
+        run: |
+          echo "复制数据文件到 public 目录..."
+          cp -r data public/
+          echo "public 目录内容:"
+          ls -la public/
+          echo "public/data 目录内容:"
+          ls -la public/data/
+
       - name: Setup Pages
         uses: actions/configure-pages@v3
 
@@ -94,6 +105,8 @@ jobs:
           npm run build
           echo "构建完成，检查 dist 目录:"
           ls -la dist/
+          echo "检查 dist/data 目录:"
+          ls -la dist/data/
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v2
