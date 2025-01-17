@@ -100,16 +100,14 @@ jobs:
             exit 1
           fi
 
-      - name: Prepare Deployment Files
+      - name: Build Website
         run: |
-          echo "准备部署文件..."
-          mkdir -p dist
-          cp index.html detail.html history.html dist/
-          cp -r data dist/
-          echo "dist 目录内容:"
+          echo "准备构建网站..."
+          mkdir -p public
+          cp -r data public/
+          npm run build
+          echo "构建完成，检查 dist 目录:"
           ls -la dist/
-          echo "dist/data 目录内容:"
-          ls -la dist/data/
           
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
