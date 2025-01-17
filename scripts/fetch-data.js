@@ -58,9 +58,37 @@ async function getAllRecords(token) {
         sort: JSON.stringify([{ field: '日期', order: 'desc' }])
       }
     }));
+
+    // 打印完整的响应数据以便调试
+    console.log('API响应数据:', JSON.stringify(response.data, null, 2));
+
+    // 检查响应数据结构
+    if (!response.data) {
+      throw new Error('API响应中没有data字段');
+    }
+    if (!response.data.data) {
+      throw new Error('API响应中没有data.data字段');
+    }
+    if (!Array.isArray(response.data.data.items)) {
+      throw new Error('API响应中的items不是数组');
+    }
+
     return response.data.data.items;
   } catch (error) {
-    console.error('获取记录失败:', error);
+    if (error.response) {
+      // 请求已发出，但服务器响应状态码不在 2xx 范围内
+      console.error('API错误响应:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        data: error.response.data
+      });
+    } else if (error.request) {
+      // 请求已发出，但没有收到响应
+      console.error('未收到API响应:', error.request);
+    } else {
+      // 发送请求时出现问题
+      console.error('请求错误:', error.message);
+    }
     throw error;
   }
 }
@@ -84,16 +112,25 @@ function getLast7Days() {
 // 主函数
 async function main() {
   try {
+    // 检查环境变量
+    if (!APP_ID || !APP_SECRET || !BASE_ID || !TABLE_ID) {
+      throw new Error('缺少必要的环境变量');
+    }
+    console.log('环境变量检查通过');
+    console.log('BASE_ID:', BASE_ID);
+    console.log('TABLE_ID:', TABLE_ID);
+
     // 确保数据目录存在
     const dataDir = path.resolve(__dirname, '../public/data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
+    console.log('数据目录创建成功:', dataDir);
 
     // 获取访问令牌
     console.log('正在获取访问令牌...');
     const token = await getTenantAccessToken();
-    console.log('成功获取访问令牌');
+    console.log('成功获取访问令牌:', token.substring(0, 10) + '...');
 
     // 获取记录
     console.log('正在获取数据记录...');
@@ -202,6 +239,9 @@ async function main() {
 
   } catch (error) {
     console.error('处理数据失败:', error);
+    if (error.response) {
+      console.error('API错误详情:', error.response.data);
+    }
     process.exit(1);
   }
 }
